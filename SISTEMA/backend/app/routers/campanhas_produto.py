@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Marketing por PRODUTO: a Visao geral vira a pasta central e cada produto tem o painel inteiro
-dentro dela: Trabalhista (reclamante, linha fixa) e Empresarial (linha do Dr. Titular).
+dentro dela: Produtor Rural (linha fixa; chave interna 'trabalhista', herdada da base) e
+Empresarial (linha do Dr. Titular).
 
 Os endpoints daqui devolvem EXATAMENTE o mesmo formato dos de `campanhas.py`, so que filtrados
 por produto. Assim a tela reaproveita o mesmo desenho:
@@ -48,7 +49,7 @@ from ..produto_card import FRASES, NOMES, produto_da_campanha, produto_da_frase 
 from ..produto_card import produto_do_lead  # noqa: E402,F401  (campanhas.py importa daqui)
 from ..produto_card import EMPRESARIAL as EMP, OUTROS, ROTULO, _sa  # noqa: E402
 
-RT = 'trabalhista'          # o nome curto que este arquivo usa; no módulo é TRABALHISTA
+RT = 'trabalhista'          # chave interna do produto PRODUTOR RURAL; no módulo é TRABALHISTA
 TETO_PADRAO = {RT: float(os.getenv('TETO_TRABALHISTA', '1500') or 1500), EMP: float(os.getenv('TETO_EMPRESARIAL', '0') or 0)}
 
 

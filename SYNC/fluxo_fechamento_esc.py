@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-FLUXO DE FECHAMENTO POS-REUNIAO - quadro Reclamantes (pipeline 10)
+FLUXO DE FECHAMENTO POS-REUNIAO - quadro Produtores Rurais (pipeline 10)
 
 Regua de 12 contatos para o lead que saiu da reuniao de fechamento sem assinar
 (a maior parte fecha entre o 8o e o 12o contato).
@@ -61,7 +61,7 @@ MARCA_QUALIFICADO = "QUALIFICADO"
 
 # Pasta de depoimentos enviada no toque 3 (compartilhada como 'qualquer pessoa com o link').
 DEPO_LINK = os.getenv("DEPOIMENTOS_LINK", "")
-ADVOGADA = os.getenv("SDR_ADVOGADA_RESPONSAVEL", "Dra. Advogada")
+ADVOGADA = os.getenv("SDR_ADVOGADA_RESPONSAVEL", "Dr. Daniel Guimarães")
 SITE = os.getenv("SITE_URL", "")
 
 # 12 toques: tocar na dor com respeito, explicar o caminho de forma didatica, prazo,
@@ -72,47 +72,45 @@ MENSAGENS = (
     "reunião. Ficou alguma dúvida sobre o que conversamos? Pode me perguntar aqui, sem "
     "compromisso.",
 
-    "{nome}, o que você contou tem nome e tem valor na Justiça do Trabalho: hora extra que não "
-    "foi paga, intervalo cortado, verbas que ficaram para trás. Você não precisa aceitar isso "
-    "calado.",
+    "{nome}, o que você contou tem caminho para ser analisado: safra que frustrou, parcela que "
+    "não fecha, banco que não quis prorrogar. Você não precisa enfrentar o banco sozinho.",
 
     "{nome}, você não precisa acreditar só na gente. Veja quem já passou por isso:\n"
-    "{depoimentos}\nSão trabalhadores como você, que decidiram buscar os seus direitos.",
+    "{depoimentos}\nSão produtores como você, que decidiram defender a sua produção e a sua terra.",
 
     "{nome}, explicando o caminho: você assina o contrato e a procuração pelo celular, envia os "
-    "documentos, a advogada prepara a ação e o escritório acompanha tudo até o fim. Você não "
-    "fica sozinho em nenhuma etapa.",
+    "documentos do banco, o advogado analisa os contratos e prepara o pedido ou a defesa, e o "
+    "escritório acompanha tudo até o fim. Você não fica sozinho em nenhuma etapa.",
 
-    "Preciso ser transparente, {nome}: os direitos trabalhistas têm prazo. A ação precisa ser "
-    "proposta em até 2 anos depois da saída da empresa. Cada mês que passa pode significar "
-    "perder parte do que é seu.",
+    "Preciso ser transparente, {nome}: em dívida rural, o tempo pesa. O pedido de prorrogação "
+    "funciona melhor antes do vencimento, e execução e leilão têm prazos curtos. Cada semana "
+    "parada pode fechar uma porta.",
 
-    "{nome}, se ainda está na empresa e a situação está difícil (salário atrasado, FGTS sem "
-    "depósito, assédio, função acumulada), existe a rescisão indireta. A advogada avalia o seu "
-    "caso antes de qualquer decisão. Me chama aqui que eu explico.",
+    "{nome}, se o banco já mandou carta, notificação ou marcou leilão, me avise hoje. O advogado "
+    "avalia o seu caso antes de qualquer decisão. Me chama aqui que eu explico.",
 
-    "{nome}, pense no que essa causa pode representar para você e para a sua família. "
-    "Buscar o que é seu por direito não é aventura. É justiça.",
+    "{nome}, pense no que a sua terra, as suas máquinas e a próxima safra representam para você "
+    "e para a sua família. Defender o que você construiu não é aventura. É seu direito de defesa.",
 
-    "{nome}, a análise do seu caso está pronta. A equipe da " + ADVOGADA + " olhou com cuidado "
+    "{nome}, a análise do seu caso está pronta. A equipe de " + ADVOGADA + " olhou com cuidado "
     "o que você contou. A parte difícil você já fez. Agora falta só uma resposta sua.",
 
-    "{nome}, começar é simples: documento com foto, carteira de trabalho e comprovante de "
-    "residência, tudo pelo WhatsApp. A assinatura é digital, no celular, sem cartório. O resto "
+    "{nome}, começar é simples: documento com foto, comprovante de residência e as cédulas do "
+    "banco, tudo pelo WhatsApp. A assinatura é digital, no celular, sem cartório. O resto "
     "fica com a gente.",
 
-    "{nome}, quem cuida do seu caso é a " + ADVOGADA + ", advogada trabalhista do escritório"
+    "{nome}, quem cuida do seu caso é " + ADVOGADA + ", do Daniel Guimarães Advocacia"
     + (". Conheça o nosso trabalho: " + SITE if SITE else "") + ".",
 
-    "{nome}, já vimos muita gente deixar para depois e perder o prazo. Não queremos que isso "
-    "aconteça com você. A sua análise continua pronta aqui. Uma resposta sua e a gente começa.",
+    "{nome}, já vimos muito produtor deixar para depois e ver a dívida crescer. Não queremos que "
+    "isso aconteça com você. A sua análise continua pronta aqui. Uma resposta sua e a gente começa.",
 
     "{nome}, esta é a minha última mensagem. Se quiser seguir com o seu caso, é só responder "
     "aqui. A porta do Daniel Guimarães Advocacia segue aberta. Um abraço.",
 )
 
 MSG3_SEM_LINK = (
-    "{nome}, muitos trabalhadores que atendemos decidiram buscar os seus direitos e hoje "
+    "{nome}, muitos produtores que atendemos decidiram enfrentar a dívida com o banco e hoje "
     "contam essa história com tranquilidade. Se quiser ouvir esses depoimentos, me manda um "
     "oi que eu te envio."
 )

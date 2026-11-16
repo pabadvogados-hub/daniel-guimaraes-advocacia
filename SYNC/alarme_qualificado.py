@@ -5,10 +5,11 @@ O termometro roda uma vez por dia, entao um lead que chega a tarde ficaria um di
 ninguem saber que ele esta no ponto. Este alarme roda de 15 em 15 minutos e classifica NA HORA.
 
 Criterio de "ligar agora":
-  violacao trabalhista identificada  E  (a pessoa JA SAIU da empresa  OU  e caso urgente mesmo
-  estando na empresa: rescisao indireta, acidente ou doenca do trabalho).
-Quem ja saiu tem prescricao bienal correndo; quem esta sofrendo na empresa (salario atrasado,
-FGTS sem deposito, assedio, acidente) precisa de orientacao antes de qualquer decisao.
+  produtor rural com problema concreto na divida (campo `violacao`)  E  (a divida JA ESTA EM
+  COBRANCA (campo `saiu`: vencida, negativado, execucao)  OU  ha URGENCIA (campo `urgente`: leilao
+  marcado, citacao ou mandado, busca e apreensao, penhora/bloqueio, consolidacao da propriedade)).
+Os nomes dos campos (violacao/saiu/urgente) vieram da base e foram mantidos: o estado e a tarefa
+fixa (lead_quente_tarefa.py) leem esses nomes. Execucao e leilao tem prazo curto correndo.
 
 A leitura e feita pelo Claude Code do servidor (ESC_CLAUDE_BIN). Cada lead so dispara UMA vez.
 Destinos: o vendedor da vez (VENDEDORES) e os telefones de ALARME_DESTINO / QUENTES_AVISO_TEL.
@@ -109,21 +110,22 @@ def classificar(cid):
     env = dict(os.environ)
     env.pop('ANTHROPIC_API_KEY', None)          # o CLI usa o login dele
     prompt = (
-        'Voce faz a triagem de leads de um escritorio trabalhista que defende TRABALHADORES. '
+        'Voce faz a triagem de leads de um escritorio que defende o PRODUTOR RURAL contra bancos e '
+        'cooperativas (credito rural, prorrogacao, execucao, leilao, busca e apreensao). '
         'Leia a conversa e responda em JSON puro, sem texto fora do JSON:\n'
         '{"violacao": true/false, "saiu": true/false, '
-        '"data_saida": "quando saiu, do jeito que a pessoa falou, ou vazio se nao disse", '
-        '"direitos": ["lista curta dos direitos citados na conversa"], '
+        '"data_saida": "data do leilao, da citacao ou do vencimento, do jeito que a pessoa falou, ou vazio", '
+        '"direitos": ["lista curta dos pontos do caso citados na conversa"], '
         '"caso": "ate 8 palavras", "porque": "ate 15 palavras", '
-        '"urgente": true/false, "tema": "rescisao indireta | acidente | outro"}\n\n'
-        'violacao = a conversa indica alguma irregularidade trabalhista concreta '
-        '(hora extra nao paga, intervalo cortado, sem registro, pagamento por fora, descontos indevidos, '
-        'acumulo de funcao, salario atrasado, FGTS nao depositado, assedio, acidente, etc).\n'
-        'saiu = a pessoa JA SAIU da empresa (foi demitida, pediu conta, contrato acabou). '
-        'Se ela ainda trabalha la, saiu=false. Se nao der para saber, saiu=false.\n'
-        'urgente = a pessoa AINDA esta na empresa, mas relata situacao grave que pede orientacao ja: '
-        'salario atrasado, FGTS sem deposito, assedio ou humilhacao, acidente ou doenca do trabalho, '
-        'afastamento, risco a saude. Na duvida, urgente=false.\n\n'
+        '"urgente": true/false, "tema": "leilao | execucao | busca e apreensao | prorrogacao | outro"}\n\n'
+        'violacao = e produtor rural e a conversa mostra problema concreto com divida rural (nao consegue '
+        'pagar, safra frustrada, queda de preco, prorrogacao negada, encargos abusivos, venda casada, '
+        'nome negativado, cobranca judicial).\n'
+        'saiu = a divida JA ESTA EM COBRANCA: parcela vencida, nome negativado ou execucao na Justica. '
+        'Se esta em dia ou nao der para saber, saiu=false.\n'
+        'urgente = ha ato com prazo curto: leilao marcado, citacao ou mandado, oficial de justica, busca e '
+        'apreensao de maquina ou veiculo, penhora ou bloqueio de conta, consolidacao da propriedade. '
+        'Na duvida, urgente=false.\n\n'
         f'CONVERSA:\n{txt[:4000]}')
     try:
         r = subprocess.run([CLAUDE_BIN, '-p', '--model', 'sonnet', '--tools', '',
@@ -163,7 +165,7 @@ def candidatos():
     out = []
     for cid, nome, tel, etapa, org in con.execute(
             "select id, contato_nome, contato_telefone, etapa, origem from wa_conversas "
-            "where pipeline_id=10 and criado_em >= ?", (corte,)):   # 10 = quadro Reclamantes
+            "where pipeline_id=10 and criado_em >= ?", (corte,)):   # 10 = quadro Produtores Rurais
         if str(cid) in est['vistos']:
             continue
         if not tel or ''.join(c for c in str(tel) if c.isdigit())[-8:] in clientes:
@@ -223,22 +225,24 @@ def ultima_troca(cid):
 
 def texto_alarme(c, cl):
     lead, nosso = ultima_troca(c['id'])
-    L = ['🚨 *LIGAR AGORA* 🚨', '',
+    L = ['*LIGAR AGORA*', '',
          f"*{c['nome'] or 'Sem nome'}*",
-         f"📱 {c['telefone']}", '',
-         f"✅ Violacao: {cl['caso']}"]
+         f"Telefone: {c['telefone']}", '',
+         f"Caso: {cl['caso']}"]
     saida = (cl.get('data_saida') or '').strip()
+    if cl.get('urgente'):
+        L.append('URGENTE: ' + (cl.get('tema') or 'ato judicial') + (f' ({saida})' if saida else ''))
+        L.append('   prazo curto correndo: ligar antes de qualquer outro lead')
     if cl.get('saiu'):
-        L.append('✅ JA SAIU da empresa' + (f': {saida}' if saida else ''))
-        L.append('   prescricao bienal ja correndo')
-    else:
-        L.append('⚠️ AINDA NA EMPRESA, caso urgente' + (f" ({cl['tema']})" if cl.get('tema') else ''))
-        L.append('   nao orientar pedido de demissao: a advogada avalia antes')
+        L.append('Divida JA EM COBRANCA' + (f': {saida}' if saida and not cl.get('urgente') else ''))
+    if not cl.get('urgente') and not cl.get('saiu'):
+        L.append('Divida em dia ou a vencer' + (f" ({cl['tema']})" if cl.get('tema') else ''))
+    L.append('   nao orientar a parar de pagar nem a esconder bens: o advogado avalia antes')
     if cl.get('direitos'):
         L.append('')
-        L.append('*Direitos que ele relatou:*')
+        L.append('*Pontos do caso que ele relatou:*')
         for d in cl['direitos']:
-            L.append(f'   • {d}')
+            L.append(f'   - {d}')
     if lead:
         L.append('')
         L.append(f'*Ultima fala dele* ({lead[1]}):')
@@ -249,7 +253,7 @@ def texto_alarme(c, cl):
     L += ['', f"_{cl['porque']}_", '',
           f"Origem: {c['origem'] or 'anuncio'} · codigo #{c['id']}",
           'Card movido para Lead Quente.', '',
-          '⏱️ Ligar nos proximos minutos e o que fecha esse caso.']
+          'Ligar nos proximos minutos e o que fecha esse caso.']
     return '\n'.join(L)
 
 
@@ -273,7 +277,7 @@ def rodar(enviar):
             continue
         qualificado = cl['violacao'] and (cl['saiu'] or cl.get('urgente'))
         marca = 'QUALIFICADO' if qualificado else (
-            'violacao, mas ainda na empresa' if cl['violacao'] else 'sem violacao clara')
+            'caso de divida, mas em dia e sem urgencia' if cl['violacao'] else 'sem caso claro')
         print(f"  #{c['id']} {(c['nome'] or '')[:22]:22s} -> {marca} | {cl['caso']}")
         est['vistos'][str(c['id'])] = {'em': datetime.now().isoformat(timespec='seconds'),
                                        'violacao': cl['violacao'], 'saiu': cl['saiu'],
@@ -290,7 +294,7 @@ def rodar(enviar):
                 if vend and not no_horario:
                     print(f"      fora do horario de {vend['nome']}: sem WhatsApp, so a tarefa fixa")
                 vtel = vend['tel'] if vend else ''
-                com = f"\n\n👤 Com *{vend['nome']}*." if vend else ''
+                com = f"\n\nCom *{vend['nome']}*." if vend else ''
                 for tel in ([vtel] if no_horario else []) + [t for t in DESTINOS if t != vtel]:
                     ok, _ = zapi_enviar_texto(tel, txt + com)
                     print(f'      alarme para {tel}: ' + ('OK' if ok else 'FALHOU'))

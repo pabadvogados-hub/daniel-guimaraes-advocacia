@@ -1,5 +1,10 @@
 # -*- coding: utf-8 -*-
-"""O produto de um card: TRABALHISTA (reclamante, linha fixa) ou EMPRESARIAL (linha do Dr. Titular).
+"""O produto de um card: PRODUTOR RURAL (linha fixa) ou EMPRESARIAL (linha do Dr. Titular).
+
+ATENCAO: o VALOR gravado no banco para o produto principal continua sendo a chave interna
+'trabalhista' (coluna wa_conversas.produto, historico e gatilhos de validacao herdados da base).
+Trocar a chave exigiria migrar dados e recriar os gatilhos; por isso so o ROTULO mudou:
+a chave 'trabalhista' significa, neste escritorio, o lead PRODUTOR RURAL (defesa contra bancos).
 
 POR QUE ESTE MODULO EXISTE SEPARADO
 1. `produto_do_fechamento` e a fonte unica: painel, comercial e esteiras perguntam aqui,
@@ -16,7 +21,7 @@ import sqlite3
 import unicodedata
 from datetime import datetime, timezone
 
-TRABALHISTA = 'trabalhista'
+TRABALHISTA = 'trabalhista'           # chave interna = PRODUTOR RURAL (ver docstring)
 EMPRESARIAL = 'empresarial'
 OUTROS = 'outros'                       # so para o lado do Meta; nunca entra na coluna
 PRODUTOS = (TRABALHISTA, EMPRESARIAL)
@@ -35,24 +40,25 @@ QUADROS_EMPRESARIAL = (30,)
 QUADROS = QUADROS_TRABALHISTA + QUADROS_EMPRESARIAL
 QUADRO_ENTRADA = 10                     # caixa de entrada: nao decide produto sozinho
 
-ROTULO = {TRABALHISTA: 'TRABALHISTA (RECLAMANTE)', EMPRESARIAL: 'EMPRESARIAL', OUTROS: 'OUTROS'}
+ROTULO = {TRABALHISTA: 'PRODUTOR RURAL', EMPRESARIAL: 'EMPRESARIAL (AGRO)', OUTROS: 'OUTROS'}
 
 # A frase do anuncio identifica o produto do lado do CRM; o nome da campanha, do lado do Meta.
 FRASES = {
-    EMPRESARIAL: ('sou empresa', 'para minha empresa', 'assessoria empresarial', 'defesa da empresa',
-                  'recebi uma reclamacao trabalhista', 'fui notificado', 'citacao'),
-    TRABALHISTA: ('quero saber meus direitos', 'trabalho em fast food', 'trabalhei em fast food',
-                  'trabalho em supermercado', 'trabalhei em supermercado', 'acidente de trabalho',
-                  'rescisao indireta', 'palestra', 'estimativa:'),
+    EMPRESARIAL: ('sou empresa', 'para minha empresa', 'assessoria empresarial', 'nossa cooperativa',
+                  'somos uma revenda', 'agroindustria', 'para a cooperativa'),
+    TRABALHISTA: ('divida rural', 'credito rural', 'prorrogar minha divida', 'prorrogacao da divida',
+                  'perdi a safra', 'a safra frustrou', 'alongamento', 'leilao da minha terra',
+                  'leilao da fazenda', 'execucao da cedula', 'busca e apreensao', 'tomaram meu trator',
+                  'calculadora de credito rural', 'minha simulacao', 'palestra'),
 }
 NOMES = {
     EMPRESARIAL: ('empresa', 'empresarial', 'b2b', 'corporativo'),
-    TRABALHISTA: ('reclamante', 'trabalhista', 'fast', 'supermercado', 'acidente', 'rescisao',
-                  'palestra', 'geral'),
+    TRABALHISTA: ('produtor', 'rural', 'agro', 'prorrogacao', 'execucao', 'leilao', 'apreensao',
+                  'safra', 'divida', 'palestra', 'geral'),
 }
 
 SERVICO = {EMPRESARIAL: 'a assessoria juridica da sua empresa',
-           TRABALHISTA: 'a acao dos seus direitos trabalhistas'}
+           TRABALHISTA: 'a defesa da sua divida rural com o banco'}
 
 MARCAS_KIT = ('boas-vindas', 'boas vindas', 'seja bem-vindo', 'seja bem vindo')
 MARCAS_CONTRATO = ('zapsign', 'contrato')
@@ -165,7 +171,7 @@ def pode_trocar_produto(user):
 # --------------------------------------------------------------------------- 3. regras puras
 
 def produto_do_quadro(pipeline_id, etapa=''):
-    """O produto que o quadro implica: Empresas -> empresarial; o resto -> trabalhista."""
+    """O produto que o quadro implica: Empresas -> empresarial; o resto -> produtor rural (chave 'trabalhista')."""
     try:
         q = int(pipeline_id or 0)
     except (TypeError, ValueError):
@@ -214,7 +220,7 @@ def produto_do_lead(origem, primeira_fala, agente=''):
 
 
 def produto_no_nascimento(origem, primeira_fala, agente=''):
-    """Sem sinal, nasce trabalhista (produto principal do escritorio)."""
+    """Sem sinal, nasce produtor rural (chave 'trabalhista', produto principal do escritorio)."""
     return produto_do_lead(origem, primeira_fala, agente) or TRABALHISTA
 
 

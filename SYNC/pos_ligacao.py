@@ -59,7 +59,7 @@ ETAPAS = {
 }
 SAI_DA_FILA = ("Lead Quente", "Lead Qualificado")   # de onde a fila_ligacao le
 
-PROMPT = """Voce e o assistente do Daniel Guimarães Advocacia, escritorio trabalhista que defende trabalhadores.
+PROMPT = """Voce e o assistente do Daniel Guimarães Advocacia, escritorio que defende o produtor rural contra bancos.
 Acabou uma ligacao com um lead. Leia a transcricao e responda em JSON puro, sem texto fora do JSON:
 
 {"resumo": ["ate 5 linhas: o CASO da pessoa e o que foi decidido. Ligacao costuma comecar com conversa fiada (time, cidade, familia, outros processos do escritorio) - isso NAO entra no resumo"],
@@ -72,14 +72,15 @@ Acabou uma ligacao com um lead. Leia a transcricao e responda em JSON puro, sem 
 
 Regras:
 - desfecho "fechou" so se a pessoa aceitou contratar de forma clara.
-- desfecho "desqualificado" se ficou claro que nao ha caso (autonomo dono do caminhao,
-  ja tem advogado, ja prescreveu, nao quer).
+- desfecho "desqualificado" se ficou claro que nao ha caso (nao e produtor rural nem divida rural,
+  divida ja quitada, ja tem advogado, nao quer).
 - desfecho "nao_atendeu" se a transcricao nao tem conversa de verdade.
 - "quando": HOJE e {hoje} ({diasemana}). Converta o que a pessoa falou para data real.
   Se ficou de "voltar a falar" sem dia, use 3 dias uteis a frente.
-- "empresa" e a RECLAMADA: onde o lead trabalha ou trabalhou. O atendente costuma citar
-  outras empresas como exemplo de processos que o escritorio ja tem - essas NAO sao a
-  reclamada. Se a pessoa falou o nome do patrao ou da transportadora dela, esse e o valor.
+- o banco ou cooperativa CREDORA e a parte contraria: o banco com quem o lead tem a divida. O
+  atendente costuma citar outros bancos como exemplo de casos que o escritorio ja tem - esses NAO
+  sao o credor. Se a pessoa falou o nome do banco, da agencia ou da cooperativa dela, esse e o valor.
+- se houver data de leilao, citacao ou mandado, ela vai no resumo, na primeira linha.
 - campo da ficha que a ligacao nao disse fica string vazia. NUNCA invente.
 
 TRANSCRICAO:
@@ -128,13 +129,13 @@ def extrair_ficha(transcricao, campos):
     lista = "\n".join(linhas)
 
     prompt = (
-        "Voce e o assistente do Daniel Guimarães Advocacia, escritorio trabalhista que defende trabalhadores.\n"
+        "Voce e o assistente do Daniel Guimarães Advocacia, escritorio que defende o produtor rural contra bancos.\n"
         "Abaixo esta a transcricao de uma ligacao com um cliente e, depois, a FICHA DE\n"
         "ENTREVISTA do escritorio. Preencha a ficha SO com o que a ligacao disse.\n\n"
         "REGRAS QUE NAO SE NEGOCIAM:\n"
         "1. NUNCA invente. Campo que a ligacao nao disse fica FORA do JSON. E melhor\n"
         "   devolver 10 campos certos do que 96 com chute. Ficha errada vira peticao errada.\n"
-        "2. Nao deduza. Se ele falou 'ganhava uns tres mil', o salario_real e 'uns R$ 3.000\n"
+        "2. Nao deduza. Se ele falou 'devo uns oitocentos mil', o saldo_devedor e 'uns R$ 800.000\n"
         "   (ele falou por alto)'. Se nao falou, o campo nao existe na resposta.\n"
         "3. Onde o rotulo pedir LITERAL, copie as palavras dele, nao resuma.\n"
         "4. Campo com lista de opcoes so aceita uma daquelas opcoes, escrita igual.\n"

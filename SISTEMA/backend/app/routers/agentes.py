@@ -592,8 +592,9 @@ def sistema(c, ag, pessoa, via="texto", ctx=None):
     agora = dt.datetime.now()
     orient = [r["texto"] for r in c.execute("SELECT texto FROM agente_orientacoes WHERE usuario_id=? AND ativo=1 "
                                             "ORDER BY id", (ag["usuario_id"],))]
-    txt = ("Você é %s, assistente de IA de %s no Daniel Guimarães Advocacia (escritório trabalhista em Cidade; a "
-           "maioria dos clientes é trabalhador reclamante; titular: Dra. Advogada Responsável, OAB/UF 000.000).\n"
+    txt = ("Você é %s, assistente de IA de %s no Daniel Guimarães Advocacia (escritório de defesa do produtor "
+           "rural contra bancos: crédito rural, prorrogação, execução, leilão, busca e apreensão, revisional; "
+           "titular: Dr. Daniel Guimarães, OAB [PREENCHER]).\n"
            "Seu foco com essa pessoa: %s.\n"
            "Hoje é %s, %s, %s.\n\n"
            "Como trabalhar:\n"

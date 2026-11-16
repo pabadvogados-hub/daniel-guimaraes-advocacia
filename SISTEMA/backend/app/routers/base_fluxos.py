@@ -35,7 +35,7 @@ _cache = {}
 
 # o que cada voto/resposta significa: o sinal que vira dinheiro vem primeiro
 SINAL = {
-    'saiu': ('saiu', 'já saiu da empresa'),
+    'saiu': ('saiu', 'dívida já em cobrança'),
 }
 
 
@@ -128,7 +128,7 @@ def _fechou_depois(contratos, cid, dia_do_toque):
 
 
 def _ja_saiu(desde, contratos):
-    """Pergunta ao lead antigo se ele já saiu da empresa."""
+    """Pergunta ao lead antigo se a dívida já venceu / está em cobrança (fluxo herdado "ja_saiu")."""
     est = _json('fluxo_saiu_state.json')
     env = est.get('enviados') or {}
     abordados = [(cid, v) for cid, v in env.items() if _no_periodo(_dia(v.get('enviado')), desde)]
@@ -138,12 +138,12 @@ def _ja_saiu(desde, contratos):
     pararam = [c for c, v in responderam if v.get('resultado') == 'parar']
     fechou = [cid for cid, v in abordados if _fechou_depois(contratos, cid, _dia(v.get('enviado')))]
     return {
-        'chave': 'ja_saiu', 'produto': 'trabalhista', 'nome': 'Já saiu da empresa?',
-        'oque_faz': 'Pergunta ao lead parado se ele continua na empresa. Quem saiu vira ligação na hora para o comercial.',
+        'chave': 'ja_saiu', 'produto': 'trabalhista', 'nome': 'A dívida já venceu?',
+        'oque_faz': 'Pergunta ao produtor parado se a dívida segue em dia ou se o banco já está cobrando. Quem está em cobrança vira ligação na hora para o comercial.',
         'quando': 'de 15 em 15 minutos, dias úteis das 9h às 17h',
         'abordados': len(abordados), 'responderam': len(responderam),
         'sinal_nome': SINAL['saiu'][1], 'sinal': len(saiu),
-        'extras': [{'rotulo': 'ainda na firma (revisita em 60 dias)', 'n': len(trabalhando)},
+        'extras': [{'rotulo': 'dívida em dia (revisita em 60 dias)', 'n': len(trabalhando)},
                    {'rotulo': 'pediram para parar', 'n': len(pararam)}],
         'votos': [], 'contratos': len(fechou),
         'por_dia': {d: n for d, n in sorted((est.get('dias') or {}).items()) if d >= desde},

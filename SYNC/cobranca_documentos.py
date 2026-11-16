@@ -10,14 +10,14 @@ documento leva tempo.
 Braco de envio = D-API (numero oficial, via wa_dapi.py) desde 24/09/2026.
 
 Comandos:
-  Inscrever (checklist padrao do caso comum):
-    python cobranca_documentos.py --enroll --nome "Jetro Correa de Sousa" --tel "19995153482"
+  Inscrever (checklist da analise inicial do produtor rural):
+    python cobranca_documentos.py --enroll --nome "Fulano de Tal" --tel "00900000000"
   Processar a fila (simulacao, padrao):
     python cobranca_documentos.py
   Processar de verdade:
     python cobranca_documentos.py --enviar
   Encerrar quando recebeu os documentos:
-    python cobranca_documentos.py --recebido --nome "Jetro Correa de Sousa"
+    python cobranca_documentos.py --recebido --nome "Fulano de Tal"
   Ver a fila:
     python cobranca_documentos.py --status
 """
@@ -83,30 +83,39 @@ FILA = os.path.join(os.path.dirname(__file__), "cobranca_documentos_fila.json")
 FIG_TIPO = "sticker"
 FIGURINHAS = {1: "", 2: "", 3: "", 4: "", 5: ""}
 
-# Checklist padrao (caso trabalhista comum). Editavel por cliente no enroll (--checklist).
-# REGRA DA EQUIPE (11/09/2026): extrato bancario NAO entra na cobranca
-# automatica. Cliente tem MEDO DE GOLPE quando pedem extrato pelo WhatsApp; na fase
-# pre-processual confiamos no relato e a equipe pede o extrato PESSOALMENTE
-# na fase seguinte.
-# REGRA DO TITULAR (23/09/2026): o B.O. NAO entra no checklist padrao. Ele era o
-# primeiro item da lista e so saia se a transcricao negasse assalto
-# expressamente; como quase nenhuma conversa toca no assunto, ele sobrava e era
-# cobrado ate 5 vezes de quem nunca foi assaltado (varios casos em 08/2026).
-# Agora e o contrario: so entra com sinal de assalto no
-# caso (ver `_teve_assalto`).
-ITEM_BO = "Boletim de Ocorrencia do roubo/sequestro"
+# Checklist do PRODUTOR RURAL (defesa contra bancos). Editavel por cliente no enroll (--checklist).
+#
+# DUAS FASES:
+#   CHECKLIST_PADRAO (= OBRIGATORIOS PARA A ANALISE INICIAL): e o que a cobranca automatica pede
+#     depois da assinatura. Sem isso o advogado nao consegue ver a divida, o contrato e a garantia.
+#   CHECKLIST_DEPOIS (FASE SEGUINTE): documentos do imovel e da producao que a equipe pede quando o
+#     caminho estiver definido (pedido de prorrogacao, defesa na execucao, revisional). NAO entram na
+#     cobranca automatica: muitos saem de cartorio/orgao publico e levam dias.
+#
+# REGRA DA EQUIPE (herdada da base): extrato da CONTA CORRENTE nao entra na cobranca automatica
+# (cliente teme golpe quando o WhatsApp pede extrato). O que se pede aqui e o DEMONSTRATIVO DA
+# DIVIDA, que o banco fornece na agencia.
+#
+# O papel judicial (citacao, mandado, edital de leilao) NAO entra no padrao: so com sinal de
+# cobranca judicial no caso (ver `_tem_cobranca_judicial`). Cobrar documento que nao existe
+# queima a confianca do cliente.
+ITEM_BO = "Foto da citacao, mandado ou edital de leilao que voce recebeu"   # nome mantido: item de excecao
 CHECKLIST_PADRAO = [
-    "Holerites que voce tiver guardado (mesmo os poucos)",
-    # ITEM SEPARADO EM DOIS (Advogada, 21/10/2026). Era um item so, "Termo de rescisao (TRCT) e
-    # comprovante do que caiu na conta", e isso prendeu um cliente por tres dias em
-    # Aguardando Documentos: sem registro em carteira o TRCT nao existe, mas o comprovante
-    # existe (ele recebeu por Pix). A poda e por item e conservadora, entao
-    # nao podia tirar metade, e a varredura so fechava o item com arquivo classificado como
-    # TRCT: item impossivel de cumprir e impossivel de podar.
-    "Termo de rescisao (TRCT)",
-    "Comprovante do que caiu na conta (Pix, deposito ou extrato)",
-    "Fotos, prints de conversa ou audios da epoca",
-    "Nome de 1 ou 2 colegas que possam servir de testemunha",
+    "Documento com foto (RG ou CNH) e CPF; se for casado(a), tambem os do conjuge",
+    "Comprovante de endereco",
+    "Cedulas e contratos do banco (custeio, investimento, Pronaf, CPR, CCB): foto de todas as paginas",
+    "Demonstrativo ou planilha da evolucao da divida (pedir na agencia do banco)",
+    "Cartas, notificacoes e mensagens do banco sobre a divida",
+    "Prova da perda da safra que tiver: laudo, Proagro, seguro rural ou decreto de emergencia do municipio",
+]
+CHECKLIST_DEPOIS = [
+    "Matricula atualizada do imovel rural",
+    "CCIR (Certificado de Cadastro de Imovel Rural)",
+    "ITR dos ultimos anos",
+    "CAR (Cadastro Ambiental Rural)",
+    "DAP ou CAF (se a operacao for Pronaf)",
+    "Notas fiscais de produtor ou talao (safra boa e safra ruim)",
+    "Orcamento ou projeto tecnico do financiamento",
 ]
 # E-MAIL NAO E COBRADO (Advogada, 24/09/2026, reforcado em 25/09): estado civil e
 # e-mail nao sao obrigatorios; saem da ligacao de fechamento quando houver.
@@ -123,7 +132,7 @@ def arg(flag, default=None):
 
 # ------------------------------------------------------------------ mensagens
 def _checklist_txt(checklist):
-    return "\n".join(f"✅ {item}" for item in checklist)
+    return "\n".join(f"- {item}" for item in checklist)
 
 
 def ja_chegou(nome):
@@ -161,34 +170,32 @@ def msg(toque, nome, checklist, recebidos=None):
         except Exception as e:
             print(f"  (aceite indisponivel, segue o texto padrao: {str(e)[:90]})")
     if toque == 1:
-        return (f"{p}, agora que ja ta tudo assinado, bora dar entrada no seu caso o quanto antes? \U0001F680\U0001F69B\n\n"
-                f"Olha so: assim que voce me mandar os documentos, eu ja PROTOCOLO a sua acao e o "
-                f"seu caso comeca a andar na Justica. Ou seja, quanto antes chegar aqui, antes a "
-                f"gente da o start pra voce buscar o que e seu \U0001F4AA\n\n"
-                f"Separei a listinha (pode mandar foto pelo celular mesmo \U0001F4F1):\n\n"
+        return (f"{p}, agora que esta tudo assinado, vamos comecar a cuidar da sua divida com o banco.\n\n"
+                f"Assim que voce mandar os documentos, o advogado analisa os contratos e a situacao da "
+                f"cobranca e define o melhor caminho. Quanto antes chegar, antes a gente age.\n\n"
+                f"Separei a lista (pode mandar foto pelo celular mesmo):\n\n"
                 + _checklist_txt(checklist) +
                 f"\n\nMe manda o que voce ja tiver AINDA HOJE, que o resto a gente vai completando. "
-                f"Qualquer duvida de onde achar, chama aqui! \U0001F91D\nDaniel Guimarães Advocacia")
+                f"Qualquer duvida de onde achar, e so chamar aqui.\nDaniel Guimarães Advocacia")
     if toque == 2:
-        return (f"Oi, {p}! \U0001F44B Seu caso ta pronto pra entrar, ta faltando so os documentos \U0001F4C2\n\n"
-                f"Se conseguir priorizar UM, manda o primeiro da sua listinha: *{(checklist[0] if checklist else 'o que voce ja tiver')}* \U0001F4B0, e ele "
-                f"que fecha o seu calculo e me libera pra protocolar. Consegue me mandar ainda hoje? \U0001F64F\n\n"
-                f"Pode ser foto ou print, do jeito que for mais rapido pra voce!\nDaniel Guimarães Advocacia")
+        return (f"Ola, {p}. Para a analise do seu caso comecar, falta so os documentos.\n\n"
+                f"Se conseguir priorizar UM, mande o primeiro da sua lista: *{(checklist[0] if checklist else 'o que voce ja tiver')}*. "
+                f"Consegue mandar ainda hoje?\n\n"
+                f"Pode ser foto ou print, do jeito que for mais rapido para voce.\nDaniel Guimarães Advocacia")
     if toque == 3:
-        return (f"{p}, tudo certo? \U0001F440 Cada dia que passa e um dia a mais pra sua acao "
-                f"comecar a correr, entao bora nao deixar parado \U0001F3C3\U0001F4A8\n\n"
-                f"Nao precisa ser nada formatado, foto pelo celular resolve. Me manda os documentos "
-                f"hoje que amanha seu caso ja pode estar entrando! \U0001F680\n\n"
-                f"Ficou com duvida em algum? Me fala que eu te explico na hora.\nDaniel Guimarães Advocacia")
+        return (f"{p}, tudo certo? Em divida rural cada dia conta: prazo do banco, da execucao e do "
+                f"leilao corre sem esperar.\n\n"
+                f"Nao precisa ser nada formatado, foto pelo celular resolve. Se nao tiver a copia das "
+                f"cedulas, pode pedir na agencia que eles sao obrigados a fornecer.\n\n"
+                f"Ficou com duvida em algum? Me fala que eu explico na hora.\nDaniel Guimarães Advocacia")
     if toque == 4:
-        return (f"Oi, {p}! \U0001F4DE Vamos destravar isso juntos pra sua acao entrar logo?\n\n"
-                f"Se algum documento da listinha estiver dificil de achar, me diz qual que eu te explico "
-                f"onde pegar, passo a passo \U0001F60A Manda o que ja tiver hoje e o resto a gente "
+        return (f"Ola, {p}. Vamos destravar isso juntos?\n\n"
+                f"Se algum documento da lista estiver dificil de achar, me diz qual que eu explico "
+                f"onde pegar, passo a passo. Manda o que ja tiver hoje e o resto a gente "
                 f"resolve junto.\nDaniel Guimarães Advocacia")
-    return (f"{p}, seu caso ta so esperando os documentos pra entrar, e eu nao quero te deixar "
-            f"perdendo tempo \U0001F64F Vou pedir pra uma pessoa do time te dar uma forca pessoalmente "
-            f"pra a gente reunir tudo rapido e protocolar. Voce e importante pra gente! \U0001F49B\n"
-            f"Daniel Guimarães Advocacia")
+    return (f"{p}, o seu caso esta so esperando os documentos, e eu nao quero te deixar "
+            f"perdendo tempo. Vou pedir para uma pessoa da equipe te ligar e ajudar "
+            f"a reunir tudo rapido.\nDaniel Guimarães Advocacia")
 
 
 # ------------------------------------------------------------------ fila
@@ -208,11 +215,11 @@ def salvar(f):
 
 
 # ------------------------------------------------------------------ enroll / recebido
-def _teve_assalto(cid, nome="", tel=""):
-    """So pede B.O. quando o caso tem assalto/roubo/sequestro de verdade.
+def _tem_cobranca_judicial(cid, nome="", tel=""):
+    """So pede a citacao/mandado/edital quando o caso tem cobranca judicial de verdade.
 
-    Olha, nesta ordem: o campo `assalto` da ficha de entrevista (que o
-    pos_ligacao preenche a partir da ligacao) e, depois, as notas da conversa.
+    Olha, nesta ordem: o campo `situacao` da ficha de entrevista (execucao, leilao, busca e
+    apreensao, consolidacao) e, depois, as notas da conversa.
     Na duvida devolve False: e melhor deixar de pedir um documento que existe do
     que cobrar cinco vezes um documento que nunca existiu.
     """
@@ -220,12 +227,13 @@ def _teve_assalto(cid, nome="", tel=""):
     import sqlite3 as _sq
     if not cid:
         return False
-    palavras = _re.compile(r"assalt|roubo|roubad|sequestr|latroc|rendera?m|arma em punho", _re.I)
+    palavras = _re.compile(r"execu[cç][aã]o|executad|leil[aã]o|edital|cita[cç][aã]o|citad|mandado|"
+                           r"busca e apreens|apreendid|oficial de justi[cç]a|consolida[cç][aã]o", _re.I)
     try:
         con = _sq.connect("/opt/escritorio/SISTEMA/backend/sistema_esc.db", timeout=15)
-        r = con.execute("select valor from ficha_entrevista where conversa_id=? and campo='assalto'",
+        r = con.execute("select valor from ficha_entrevista where conversa_id=? and campo='situacao'",
                         (cid,)).fetchone()
-        if r and (r[0] or "").strip() and not _re.search(r"^\s*(nao|n/a|nunca|-)\b", r[0], _re.I):
+        if r and palavras.search(r[0] or ""):
             con.close()
             return True
         n = con.execute("select notas from wa_conversas where id=?", (cid,)).fetchone()
@@ -239,16 +247,15 @@ def enroll_cliente(nome, tel="", checklist=None, cid=None, podar=True):
 
     Quando o chamador nao informa `checklist`, o padrao e PODADO pela
     transcricao da reuniao de fechamento (`checklist_documentos.montar`), para
-    nao cobrar documento que o cliente ja disse que nao existe. Foi assim que a
-    automacao pediu B.O. de roubo a um cliente por cinco toques, em 08/2026,
-    depois de ele afirmar na reuniao que nunca foi assaltado. A poda so remove
+    nao cobrar documento que o cliente ja disse que nao existe (licao herdada da base:
+    pedir cinco vezes um papel que nao existe queima a confianca). A poda so remove
     item que a transcricao contradiz EXPRESSAMENTE e, em qualquer falha, mantem
     o checklist padrao - nunca fica pior que antes.
     """
     itens = list(checklist) if checklist else None
     origem = "informado pelo chamador" if checklist else None
-    # B.O. nao vem no padrao: entra so se o caso tiver assalto (regra de 23/09/2026)
-    bo_cabe = _teve_assalto(cid, nome, tel)
+    # papel judicial nao vem no padrao: entra so se o caso tiver cobranca judicial
+    bo_cabe = _tem_cobranca_judicial(cid, nome, tel)
     if itens is None and podar:
         try:
             from checklist_documentos import montar
@@ -259,12 +266,12 @@ def enroll_cliente(nome, tel="", checklist=None, cid=None, podar=True):
             origem = f"pendente: erro {str(e)[:80]}"
     elif itens is None:
         itens, origem = list(CHECKLIST_PADRAO), "padrao (poda desligada)"
-    # O B.O. e o unico item que entra por excecao, nunca por padrao: so quando a
-    # ficha ou a conversa mostram assalto/roubo/sequestro. Antes era o contrario
-    # e cliente que nunca foi assaltado levava cinco cobrancas.
+    # O papel judicial e o unico item que entra por excecao, nunca por padrao: so quando a
+    # ficha ou a conversa mostram execucao, leilao ou busca e apreensao. Vai em PRIMEIRO
+    # lugar porque define o prazo.
     if bo_cabe and itens is not None and ITEM_BO not in itens:
         itens = [ITEM_BO] + list(itens)
-        origem = (origem or "") + " + B.O. (caso tem assalto)"
+        origem = (origem or "") + " + papel judicial (caso tem cobranca judicial)"
     fila = carregar()
     fila["clientes"][nome] = {
         "nome": nome,
@@ -361,9 +368,8 @@ def processar():
         if not _garantir_checklist(nome, c):
             continue
 
-        # O QUE O CLIENTE JA DISSE QUE NAO TEM SAI DA LISTA (caso Abel, 25/09):
-        # cliente sem registro escreveu duas vezes "nao tenho holerite" e
-        # "ninguem vai querer ser testemunha" e a cobranca seguiu pedindo os dois.
+        # O QUE O CLIENTE JA DISSE QUE NAO TEM SAI DA LISTA: se ele escreveu "nao tenho laudo"
+        # ou "nunca recebi carta do banco", a cobranca para de pedir esses itens.
         _podar_pelo_que_o_cliente_disse(nome, c)
         if not c.get("checklist"):
             c["encerrado"] = True
@@ -384,7 +390,7 @@ def processar():
                 print(f"[{nome}] aviso: nao movi para a producao: {str(e)[:120]}")
             continue
 
-        # JA MANDOU (Tobias, 10 e 12/10/2026): pausa e confere, em vez de insistir
+        # JA MANDOU: pausa e confere, em vez de insistir
         if c.get("pausa_ja_mandou"):
             print(f"[{nome}] pausado desde {c['pausa_ja_mandou']}: cliente disse que ja mandou "
                   "(conferencia humana). skip.")
@@ -439,20 +445,20 @@ TEL_TIME = os.getenv("TEL_ALERTA_EQUIPE", "")
 
 # item do checklist -> como o cliente se refere a ele
 _ITEM_PALAVRA = [
-    (r"holerite", r"h?olerite|contra.?cheque|recibo de pagamento"),  # "olerite" (Oziel)
-    (r"rescisao|trct", r"rescis|trct"),
-    (r"testemunha", r"testemunha"),
+    (r"laudo|proagro|perda da safra", r"laudo|proagro|seguro|decreto|emerg[eê]ncia"),
+    (r"cartas|notifica", r"carta|notifica[cç]"),
+    (r"conjuge", r"c[oô]njuge|esposa|marido|mulher"),
+    (r"demonstrativo|planilha", r"demonstrativo|planilha|evolu[cç][aã]o"),
     (r"e-?mail", r"e-?mail"),
 ]
 _NEGA = (r"n[aã]o\s+(tenho|tinha|tem|tive|recebi|recebia|davam|dava|existe|existia|"
          r"vai\s+querer|v[aã]o\s+querer|quer(em)?|conhe[cç]o)|nunca\s+(tive|recebi|me\s+deram)|"
          r"ningu[eé]m\s+(vai|quer)|n[aã]o\s+me\s+davam|"
-         # Oziel, 07 e 08/10/2026: "Eles não me deram os olerites", "não me deram a rescisão"
          r"n[aã]o\s+me\s+(deram|deu(?!\s+tempo)|entregaram|entregou|passaram|passou|mandaram)|"
          r"n[aã]o\s+(deram|entregaram)")
 
-# Cliente que diz que ja mandou (Tobias, 10 e 12/10/2026: "Mais eu já mandei", "eu mandei
-# várias coisas e documentos. E sempre diz q falta algo") nao leva mais lembrete: a cobranca
+# Cliente que diz que ja mandou ("eu ja mandei", "mandei varias coisas") nao leva mais
+# lembrete: a cobranca
 # pausa e a Dra. Advogada confere a pasta (o que a visao nao reconheceu fica como OUTRO_).
 _JA_MANDEI = (r"j[aá]\s+(te\s+|lhe\s+|os\s+|as\s+)?(mandei|enviei|encaminhei|passei)|"
               r"(mandei|enviei)\s+(tudo|v[aá]rias|v[aá]rios)")

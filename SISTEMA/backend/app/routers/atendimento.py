@@ -1,4 +1,4 @@
-"""Modulo Atendimento - WhatsApp (Z-API/D-API) + IA (SDR de reclamantes e recepcao de empresas) + CRM/inbox.
+"""Modulo Atendimento - WhatsApp (Z-API/D-API) + IA (SDR de produtores rurais e recepcao de empresas) + CRM/inbox.
 
 - POST /api/atendimento/webhook/{numero_id}  -> recebe Z-API (publico), grava e a IA responde
 - GET  /api/atendimento/conversas             -> inbox (equipe)
@@ -302,7 +302,7 @@ async def seed_numeros():
     Credenciais ficam so no .env/banco; nada de numero ou token no codigo."""
     import os
     linhas = [
-        ('RECLAMANTES', 'reclamante', 'Reclamantes', True),
+        ('RECLAMANTES', 'reclamante', 'Produtores Rurais', True),
         ('EMPRESAS', 'empresas', 'Empresas', os.getenv('WA_EMPRESAS_IA', '0') == '1'),
     ]
     async with AsyncSessionLocal() as db:
@@ -551,7 +551,7 @@ async def _processar_webhook(numero_id: int, request: Request, bg: BackgroundTas
             if getattr(numero, 'agente', '') == 'empresas':
                 conv.tag = 'EMPRESA'
             elif conv.e_reclamante:
-                conv.tag = 'RECLAMANTE'
+                conv.tag = 'PRODUTOR RURAL'
 
     await db.commit()
 
@@ -615,7 +615,7 @@ def _tempo_de_digitacao(texto: str) -> float:
 async def _responder_ia(conversa_id: int, forcar: bool = False):
     """Roda em background: baixa/salva+transcreve os audios (SEMPRE), e — se a IA
     estiver no comando — monta o historico, aplica o filtro e responde via Z-API.
-    forcar=True (disparo manual): ignora o filtro de assunto trabalhista."""
+    forcar=True (disparo manual): ignora o filtro de assunto (produtor rural / divida com banco)."""
     import os, asyncio
     async with AsyncSessionLocal() as db:
         conv = (await db.execute(select(Conversa).where(Conversa.id == conversa_id))).scalar_one_or_none()
@@ -682,11 +682,11 @@ async def _responder_ia(conversa_id: int, forcar: bool = False):
             return
 
         agente = numero.agente or AGENTE_PADRAO
-        # detecta assunto trabalhista no historico ja com o texto transcrito
+        # detecta assunto de produtor rural / divida rural no historico ja com o texto transcrito
         if agente != 'empresas' and not conv.e_reclamante and sdr_reclamante.eh_reclamante(hist):
             conv.e_reclamante = True
         if conv.e_reclamante and not (conv.tag or '').strip():
-            conv.tag = 'RECLAMANTE'   # preenche a ficha
+            conv.tag = 'PRODUTOR RURAL'   # preenche a ficha
         await db.commit()
 
         # RESPEITA O HUMANO: se um atendente ja falou nessa conversa, a IA nao entra sozinha.
@@ -696,7 +696,7 @@ async def _responder_ia(conversa_id: int, forcar: bool = False):
         if not forcar and any(m.origem == 'atendente' and not (m.autor or '').startswith('fluxo:') for m in msgs):
             return
 
-        # filtro por agente: se a linha esta em "so reclamante", a SDR so responde quem fala de trabalho
+        # filtro por agente: se a linha esta em "so reclamante" (= so produtor), a SDR so responde quem fala de producao/divida rural
         # (disparo manual com forcar=True ignora esse filtro). Regra da casa: na duvida, atende.
         if not forcar and agente == 'reclamante' and numero.so_reclamante and not conv.e_reclamante:
             return
@@ -1213,57 +1213,57 @@ async def enviar_midia(conversa_id: int, arquivo: UploadFile = File(...), captio
 
 
 # ===================== FLUXOS AUTOMATICOS (cadencia de mensagens) =====================
-# Publico: trabalhador (reclamacao trabalhista). Nunca cobra pagamento por aqui e nao fala de
-# honorarios: condicoes ficam no contrato, com a advogada. Linguagem do escritorio: didatica com formal.
+# Publico: produtor rural endividado com banco/cooperativa. Nunca cobra pagamento por aqui e nao fala de
+# honorarios: condicoes ficam no contrato, com o advogado. Linguagem: respeitosa, simples, do jeito do campo.
 # Motor roda 1x/dia: para cada fluxo ativo, calcula os dias desde o inicio e manda a
 # mensagem do dia devido que ainda nao foi enviada. Para quando conclui ou o lead responde.
 FLUXOS = {
     'assinatura': {
         'nome': 'Assinatura de documentos',
-        'descricao': 'Lembra o cliente de assinar o contrato e a procuracao para o escritorio dar entrada na acao.',
+        'descricao': 'Lembra o cliente de assinar o contrato e a procuracao para o escritorio comecar a defesa.',
         'passos': [
             {'ordem': 1, 'apos_horas': 0, 'texto': (
                 "{nome}, o seu contrato e a procuracao ja estao prontos para assinatura. A assinatura e feita pelo "
-                "celular, leva poucos minutos e e o que permite ao escritorio dar entrada na sua acao. "
+                "celular, leva poucos minutos e e o que permite ao escritorio comecar a cuidar da sua divida com o banco. "
                 "Consegue assinar hoje?")},
             {'ordem': 2, 'apos_horas': 6, 'texto': (
-                "{nome}, explicando o proximo passo: depois da sua assinatura, o escritorio pede os seus documentos, "
-                "prepara a peticao inicial e entra com a acao na Justica do Trabalho. Tudo comeca pela assinatura.")},
+                "{nome}, explicando o proximo passo: depois da sua assinatura, o escritorio pede os documentos da "
+                "divida, analisa os contratos do banco e prepara o pedido ou a defesa. Tudo comeca pela assinatura.")},
             {'ordem': 3, 'apos_horas': 24, 'texto': (
                 "{nome}, se ficou alguma duvida sobre o contrato, pode me perguntar aqui. Prefiro que voce assine "
                 "tranquilo, entendendo cada ponto.")},
             {'ordem': 4, 'apos_horas': 48, 'texto': (
-                "{nome}, quem cuida do seu caso e a Dra. Advogada, advogada do escritorio. Assim que voce assinar, "
-                "ela ja comeca a preparar a sua acao.")},
+                "{nome}, quem cuida do seu caso e a equipe juridica do escritorio. Assim que voce assinar, "
+                "a analise dos seus contratos com o banco ja comeca.")},
             {'ordem': 5, 'apos_horas': 96, 'texto': (
-                "{nome}, um lembrete importante: os direitos trabalhistas tem prazo. A acao precisa ser proposta em "
-                "ate dois anos depois da saida da empresa. Por isso vale nao deixar a assinatura para depois.")},
+                "{nome}, um lembrete importante: em divida rural, cada dia conta. Pedido ao banco, execucao e "
+                "leilao tem prazos curtos. Por isso vale nao deixar a assinatura para depois.")},
             {'ordem': 6, 'apos_horas': 168, 'texto': (
-                "{nome}, o que esta impedindo a assinatura? Se for duvida sobre como funciona ou sobre o que voce "
-                "tem direito, me conte que eu explico ou peco para a advogada falar com voce.")},
+                "{nome}, o que esta impedindo a assinatura? Se for duvida sobre como funciona, me conte que eu "
+                "explico ou peco para o advogado falar com voce.")},
             {'ordem': 7, 'apos_horas': 288, 'texto': (
                 "{nome}, o seu caso continua reservado aqui. Se quiser seguir, me responda com um sim que eu "
                 "reenvio o link da assinatura.")},
             {'ordem': 8, 'apos_horas': 480, 'texto': (
-                "{nome}, este e o meu ultimo contato sobre a assinatura. Se quiser seguir com a acao, e so responder "
+                "{nome}, este e o meu ultimo contato sobre a assinatura. Se quiser seguir com o caso, e so responder "
                 "aqui. Se decidiu nao seguir, me avise para eu encerrar o seu atendimento. Fico a disposicao.")},
         ],
     },
     'documentos': {
         'nome': 'Envio de documentos',
-        'descricao': 'Depois de assinar, pede os documentos para montar o processo.',
+        'descricao': 'Depois de assinar, pede os documentos da divida rural para a analise e o pedido/defesa.',
         'passos': [
             {'ordem': 1, 'apos_horas': 0, 'texto': (
-                "{nome}, assinatura recebida, obrigado. Agora, para preparar a sua acao, preciso de: documento com "
-                "foto (RG ou CNH), carteira de trabalho (fisica ou a digital), comprovante de endereco e, se tiver, "
-                "holerites, termo de rescisao e qualquer prova do que aconteceu (mensagens, fotos, atestados). "
-                "Pode enviar foto aqui mesmo.")},
+                "{nome}, assinatura recebida, obrigado. Agora, para a analise, preciso de: documento com foto "
+                "(RG ou CNH) e CPF, comprovante de endereco, as cedulas ou contratos do banco, extrato ou planilha "
+                "da divida e as cartas ou notificacoes do banco. Se tiver citacao, mandado ou edital de leilao, "
+                "mande primeiro. Pode enviar foto aqui mesmo.")},
             {'ordem': 2, 'apos_horas': 24, 'texto': (
-                "{nome}, estou aguardando os seus documentos para a advogada comecar a peticao: documento com foto, "
-                "carteira de trabalho e comprovante de endereco. Se tiver dificuldade para achar algum, me avise "
-                "que eu explico como conseguir.")},
+                "{nome}, estou aguardando os seus documentos para a analise comecar: documento com foto, "
+                "comprovante de endereco e as cedulas do banco. Se nao tiver a copia das cedulas, me avise que "
+                "eu explico como pedir na agencia.")},
             {'ordem': 3, 'apos_horas': 72, 'texto': (
-                "{nome}, sem os documentos o processo nao avanca. Me envie hoje o que tiver em maos; o que faltar, "
+                "{nome}, sem os documentos o caso nao avanca. Me envie hoje o que tiver em maos; o que faltar, "
                 "a gente resolve depois.")},
         ],
     },
@@ -1307,18 +1307,19 @@ FLUXOS = {
     # Inscricao automatica pelo termometro (criado_por='auto:adiar') ou manual. Desliga se o lead responder.
     'reaquecimento_bimestral': {
         'nome': 'Reaquecimento anual (não quer agora ou quer depois)',
-        'descricao': 'Lead com caso que disse que não quer agora ou pediu para falar mais pra frente. Três lembretes de direitos no ano, aos 4, 8 e 12 meses; para sozinho se ele responder.',
+        'descricao': 'Lead com caso que disse que não quer agora ou pediu para falar mais pra frente. Três lembretes no ano, aos 4, 8 e 12 meses (perto do plantio e da colheita); para sozinho se ele responder.',
         'passos': [
             {'ordem': 1, 'apos_horas': 2880, 'texto': (
                 "Ola, {nome}, aqui e do Daniel Guimarães Advocacia. Voce comentou que preferia deixar para mais "
-                "para frente, e esta tudo certo. So lembrando: os direitos trabalhistas podem ser cobrados em ate "
-                "dois anos depois da saida da empresa. Quando quiser conversar sobre o seu caso, e so responder aqui.")},
+                "para frente, e esta tudo certo. So lembrando: o pedido de prorrogacao ao banco funciona melhor "
+                "quando feito antes do vencimento da parcela. Quando quiser conversar sobre a sua divida, e so "
+                "responder aqui.")},
             {'ordem': 2, 'apos_horas': 5760, 'texto': (
-                "{nome}, tudo bem? Muita gente descobre tarde que tinha direito a horas extras, intervalo, adicional "
-                "ou verbas da rescisao que nao foram pagas. Se quiser, a gente conversa sobre o seu caso. E so "
+                "{nome}, tudo bem? Muito produtor descobre tarde que podia ter pedido a prorrogacao da parcela "
+                "ou revisto os encargos do contrato. Se quiser, a gente conversa sobre o seu caso. E so "
                 "mandar um oi.")},
             {'ordem': 3, 'apos_horas': 8640, 'texto': (
-                "{nome}, este e o meu ultimo lembrete. Se um dia decidir olhar o que a empresa ficou devendo, o "
+                "{nome}, este e o meu ultimo lembrete. Se um dia precisar de ajuda com a divida do banco, o "
                 "Daniel Guimarães Advocacia estara a disposicao. Guarde o nosso contato.")},
         ],
     },
@@ -1613,7 +1614,7 @@ async def toggle_ia(conversa_id: int, req: IAReq, bg: BackgroundTasks,
         conv.e_reclamante = True   # ligar manual = IA cuida dessa conversa (bypassa o filtro dali pra frente)
     await db.commit()
     if req.ativa:
-        bg.add_task(_responder_ia, conv.id, True)   # forcar=True: dispara mesmo sem assunto trabalhista
+        bg.add_task(_responder_ia, conv.id, True)   # forcar=True: dispara mesmo sem assunto de divida rural
     return {'ok': True, 'ia_ativa': conv.ia_ativa}
 
 
@@ -1958,7 +1959,7 @@ def _con_produto():
 
 
 class ProdutoReq(BaseModel):
-    produto: str                          # 'trabalhista' ou 'empresarial'
+    produto: str                          # 'trabalhista' (= produtor rural, chave interna) ou 'empresarial'
     de_produto: Optional[str] = None      # o que a tela estava mostrando, para pegar conflito
     motivo: str = ''
 
@@ -2052,7 +2053,7 @@ async def ver_produto(conversa_id: int, user: Usuario = Depends(usuario_atual)):
                 'produto': atual,
                 'de_produto': atual,
                 'opcoes': [{'valor': produto_card.TRABALHISTA,
-                            'rotulo': 'Trabalhista (reclamante)'},
+                            'rotulo': 'Produtor rural'},
                            {'valor': produto_card.EMPRESARIAL, 'rotulo': 'Empresarial'}],
                 'pode_trocar': produto_card.pode_trocar_produto(user),
                 'valor_do_produto': (produto_card.valor_do_produto(atual) if atual else None),
@@ -2384,7 +2385,7 @@ class NumeroReq(BaseModel):
     zapi_token: str = ''
     zapi_client_token: str = ''
     atende_ia: bool = True
-    agente: str = 'reclamante'   # 'reclamante' (SDR trabalhista) ou 'empresas' (recepcao B2B)
+    agente: str = 'reclamante'   # 'reclamante' (SDR do produtor rural) ou 'empresas' (recepcao B2B)
     so_reclamante: bool = False
 
 

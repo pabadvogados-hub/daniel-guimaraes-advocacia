@@ -33,11 +33,12 @@ DB = "/opt/escritorio/SISTEMA/backend/sistema_esc.db"
 CLAUDE_BIN = os.getenv("ESC_CLAUDE_BIN", os.path.expanduser("~/.local/bin/claude"))
 
 # o que o escritorio faz, para a peca nascer no assunto certo
-CONTEXTO = """O escritorio e o Daniel Guimarães Advocacia, de Cidade, liderado pela
-Dra. Advogada Responsável (OAB/UF 000.000). Especialidade: direito do trabalho do
-TRABALHADOR (reclamante): rescisao indireta, acidente de trabalho, trabalhadores de fast-food e
-supermercado, e trabalhista em geral. Quem le e trabalhador: fala simples, direta, didatica,
-sem juridiques. Nada de tratar o leitor como coitado."""
+CONTEXTO = """O escritorio e o Daniel Guimarães Advocacia, de [PREENCHER: cidade/UF], liderado pelo
+Dr. Daniel Guimarães (OAB [PREENCHER]). Especialidade: defesa do PRODUTOR RURAL contra bancos e
+cooperativas de credito: prorrogacao e alongamento de credito rural, execucao de cedula rural, leilao
+de terra, busca e apreensao de maquina, revisional de contrato bancario. Quem le e produtor rural
+(pequeno, medio ou grande, agricultor familiar, pecuarista): fala simples, direta, respeitosa, do
+jeito do campo, sem juridiques. Nada de tratar o leitor como coitado nem de demonizar o banco."""
 
 # O que a OAB proibe e o ESCRITORIO prometer RESULTADO. Descrever o que a LEI
 # assegura e o proprio conteudo informativo que o Provimento 205 autoriza, entao
@@ -101,7 +102,7 @@ def escrever(item):
         "- sem sensacionalismo, sem contagem regressiva, sem 'ultimas vagas'.\n"
         "- pode convidar a procurar um advogado para analisar O CASO DA PESSOA.\n\n"
         "COMO ESCREVER:\n"
-        "- lingua do trabalhador, frase curta, zero juridiques. Se usar um termo tecnico, explique na hora.\n"
+        "- lingua do produtor rural, frase curta, zero juridiques. Se usar um termo tecnico, explique na hora.\n"
         "- o primeiro slide e um gancho concreto do dia a dia dele, nao uma pergunta generica.\n"
         "- o ultimo slide fecha com o que ele deve FAZER (guardar documento, procurar orientacao).\n"
         "- NAO use travessao. Nem o longo nem o medio.\n"

@@ -7,10 +7,10 @@ from ..database import Base
 
 
 class NumeroWhatsapp(Base):
-    """Cada numero conectado (multi-numero): linha fixa de Reclamantes + numero de Empresas."""
+    """Cada numero conectado (multi-numero): linha fixa de Produtores Rurais + numero de Empresas."""
     __tablename__ = 'wa_numeros'
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    nome: Mapped[str] = mapped_column(String(120))                 # "Reclamantes" / "Empresas"
+    nome: Mapped[str] = mapped_column(String(120))                 # "Produtores Rurais" / "Empresas"
     telefone: Mapped[str] = mapped_column(String(30), default='')  # 55DDDNUMERO
     # Credenciais Z-API deste numero
     zapi_instance: Mapped[str] = mapped_column(String(120), default='')
@@ -18,9 +18,9 @@ class NumeroWhatsapp(Base):
     zapi_client_token: Mapped[str] = mapped_column(String(200), default='')  # Account Security Token
     # A IA responde neste numero?
     atende_ia: Mapped[bool] = mapped_column(Boolean, default=True)
-    # Qual agente atende: 'reclamante' (SDR trabalhista, linha fixa) ou 'empresas' (recepcao B2B)
+    # Qual agente atende: 'reclamante' (SDR do produtor rural, linha fixa; chave herdada) ou 'empresas' (recepcao B2B)
     agente: Mapped[str] = mapped_column(String(30), default='reclamante')
-    # A IA so responde quem fala de trabalho neste numero? (vale so p/ a SDR de reclamantes)
+    # A IA so responde quem fala de producao/divida rural neste numero? (vale so p/ a SDR da linha principal)
     so_reclamante: Mapped[bool] = mapped_column(Boolean, default=False)
     ativo: Mapped[bool] = mapped_column(Boolean, default=True)
     criado_em: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
@@ -32,7 +32,7 @@ class NumeroWhatsapp(Base):
 
 
 class Pipeline(Base):
-    """Um funil/quadro do CRM (ex.: Reclamantes, Empresas, Palestra Rescisao Indireta). IDs fixos em funis.py."""
+    """Um funil/quadro do CRM (ex.: Produtores Rurais, Empresas, Palestra Credito Rural). IDs fixos em funis.py."""
     __tablename__ = 'wa_pipelines'
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     nome: Mapped[str] = mapped_column(String(120))
@@ -77,7 +77,7 @@ class Conversa(Base):
     email: Mapped[str] = mapped_column(String(200), default='')
     handle: Mapped[str] = mapped_column(String(120), default='')      # @ do social
     valor: Mapped[float] = mapped_column(default=0.0)                 # valor de venda
-    # De que produto e este card: 'trabalhista' (reclamante) ou 'empresarial'.
+    # De que produto e este card: 'trabalhista' (chave interna = produtor rural) ou 'empresarial'.
     # NAO se troca por aqui nem pelo PATCH /conversas/{id}/dados: so pelo
     # PATCH /conversas/{id}/produto, que checa papel, valida, versiona e registra quem mudou.
     # A regra inteira esta em app/produto_card.py. Gatilhos no banco barram valor inventado,
@@ -91,7 +91,7 @@ class Conversa(Base):
     atendente_email: Mapped[str] = mapped_column(String(200), default='', index=True)
     # IA no comando? (false quando um humano assume)
     ia_ativa: Mapped[bool] = mapped_column(Boolean, default=True)
-    e_reclamante: Mapped[bool] = mapped_column(Boolean, default=False)   # falou de trabalho: SDR atende
+    e_reclamante: Mapped[bool] = mapped_column(Boolean, default=False)   # falou de producao/divida rural: SDR atende (coluna herdada)
     aceita: Mapped[bool] = mapped_column(Boolean, default=False)    # triada (aceita): sai de "Nao lidas"
     recusada: Mapped[bool] = mapped_column(Boolean, default=False)  # triada (recusada): sai de "Nao lidas"
     nao_lidas: Mapped[int] = mapped_column(Integer, default=0)

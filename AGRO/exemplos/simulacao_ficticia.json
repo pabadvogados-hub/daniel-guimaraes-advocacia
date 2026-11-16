@@ -1,0 +1,17 @@
+{
+ "_aviso": "DADOS FICTICIOS para demonstrar a calculadora.",
+ "lead": "Produtor Exemplo (fictício)",
+ "banco": "Banco Exemplo S.A. (fictício)",
+ "valor": 850000.0,
+ "taxa": 12.5,
+ "tipo": "aa",
+ "parcelas": 5,
+ "por_ano": 1,
+ "sistema": "price",
+ "carencia": 12,
+ "carencia_juros": "pagos",
+ "custos": 9500.0,
+ "taxa_comparacao": 8.0,
+ "prorrogar_anos": 3,
+ "prorrogar_carencia": 0
+}

@@ -45,7 +45,7 @@ import roteamento_vendedoras as ROTA  # noqa: E402
 DB = '/opt/escritorio/SISTEMA/backend/sistema_esc.db'
 ESTADO = os.path.join(HERE, 'comercial_state.json')
 PIPELINE = 10
-ETAPAS_FILA = ('Caixa de Entrada', 'Campanha Fast-food', 'Campanha Supermercado', 'Campanha Acidente de Trabalho',
+ETAPAS_FILA = ('Caixa de Entrada', 'Campanha Prorrogação', 'Campanha Execução e Leilão', 'Campanha Busca e Apreensão',
                'Campanha Geral', 'Lead Quente', 'Lead Qualificado', 'Contatado')
 ETAPA_FECHOU = 'Contrato / Assinatura'
 ETAPA_DESQUALIFICADO = 'Lead Desqualificado'
@@ -409,7 +409,7 @@ def _contagem_crm(corte, est):
 
 def _conversao_produto(inicio=None):
     """Conversao por assunto, anuncio e situacao. Leads = conversas que chegaram no periodo nos quadros
-    Reclamantes, Clientes, Producao, Contratacao e Palestra. Contrato = entrada na esteira de contratacao,
+    Produtores Rurais, Clientes, Producao, Contratacao e Palestra. Contrato = entrada na esteira de contratacao,
     sem os perdidos."""
     inicio = inicio or (date.today() - timedelta(days=90))
     con = _con()
@@ -428,11 +428,11 @@ def _conversao_produto(inicio=None):
             "from wa_conversas where pipeline_id in (10, 11, 18, 20, 31) and replace(criado_em,'T',' ') >= ?",
             ((datetime.combine(inicio, datetime.min.time()) + timedelta(hours=3)).strftime('%Y-%m-%d %H:%M:%S'),)):
         dia = (datetime.fromisoformat(criado) - timedelta(hours=3)).date()
-        reclamante = bool(cam) or 'RECLAMANTE' in tag.upper()
-        chaves = [('produto', 'Reclamante' if reclamante else 'Outros assuntos'),
+        reclamante = bool(cam) or 'PRODUTOR' in tag.upper() or 'RECLAMANTE' in tag.upper()
+        chaves = [('produto', 'Produtor rural' if reclamante else 'Outros assuntos'),
                   ('anuncio', origem.replace('Campanha ', '') if origem else 'Orgânico/sem origem')]
         if reclamante:
-            chaves.append(('situacao', {'saiu': 'Já saiu', 'trabalhando': 'Trabalha'}.get(sit.get(cid, ''), 'Não disse')))
+            chaves.append(('situacao', {'saiu': 'Em cobrança', 'trabalhando': 'Em dia'}.get(sit.get(cid, ''), 'Não disse')))
         for jan, d0 in janelas.items():
             if dia < d0:
                 continue
@@ -458,7 +458,7 @@ def _conversao_produto(inicio=None):
     L = ['', f'🎯 *Conversão por produto* · contratos/leads que chegaram desde {inicio:%d/%m} · e no mês']
     L += linha('produto')
     L += ['_Por anúncio:_'] + linha('anuncio')
-    L += ['_Reclamante por situação:_'] + linha('situacao')
+    L += ['_Produtor por situação da dívida:_'] + linha('situacao')
     L += [f'Contratos de leads antigos (base) no mês: {max(0, base_mes)}']
     return L
 
@@ -534,7 +534,7 @@ def _conversao_do_modulo(modulo):
         return [f"• {x['nome']}: {x['contratos']}/{x['leads']} ({p(x['pct'])}) · mês {x['contratos_mes']}/{x['leads_mes']} "
                 f"({p(x['pct_mes'])})" for x in cv[dim]]
     return (['', '🎯 *Conversão* · contratos/leads desde o início da série · e no mês'] + linhas('produto')
-            + ['_Reclamante por situação (já saiu x trabalha):_'] + linhas('situacao')
+            + ['_Produtor por situação da dívida (em cobrança x em dia):_'] + linhas('situacao')
             + ['_Por anúncio:_'] + linhas('anuncio'))
 
 
@@ -598,7 +598,7 @@ def painel(desde=None, enviar=False):
                        'contratos': ct_total, 'a_receber': a_receber, 'crm': c2}
     if modulo:
         t = modulo['visao']['mes']
-        L += ['', '*No mês*', f'⚖ Trabalhista: *{t["contratos"]} de {t["meta"]}* contratos']
+        L += ['', '*No mês*', f'Produtor rural: *{t["contratos"]} de {t["meta"]}* contratos']
     if primeira_vez:
         L += ['', '(leitor do CRM ligado agora: cards avançados começam a contar amanhã)']
     try:

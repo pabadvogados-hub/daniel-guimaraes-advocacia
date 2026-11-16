@@ -2,7 +2,7 @@
 
 Substitui o Atende Direito por uma solucao propria:
   - WhatsApp via Z-API (multi-numero)
-  - IA (Claude) como primeiro atendimento: SDR de reclamantes e recepcao de empresas
+  - IA (Claude) como primeiro atendimento: SDR de produtores rurais e recepcao de empresas
   - Inbox + CRM/funil, atendidos pela equipe (login por pessoa)
 
 Roda 24/7 na VPS (systemd), independente de PC ligado.

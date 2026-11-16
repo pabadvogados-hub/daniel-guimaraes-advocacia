@@ -2,9 +2,9 @@
 """Fluxo dos LEADS QUENTES: da Caixa de Entrada para a LIGACAO que fecha contrato.
 
 Publico: leads que o termometro marcou como quente ou morno e que estao parados nas
-colunas de ENTRADA do quadro Reclamantes (Caixa de Entrada e colunas de campanha).
+colunas de ENTRADA do quadro Produtores Rurais (Caixa de Entrada e colunas de campanha).
 O objetivo de cada toque nao e vender por escrito, e conseguir UM HORARIO
-para a doutora ligar.
+para o advogado ligar.
 
 Qualificacao embutida (o que o time pediu):
   - toque 1 pergunta, em uma palavra, se a pessoa JA TEM ACAO OU ADVOGADO;
@@ -52,13 +52,13 @@ DB = '/opt/escritorio/SISTEMA/backend/sistema_esc.db'
 FILA = os.path.join(HERE, 'quentes_fila.json')
 PIPELINE = 10
 ETAPA_ORIGEM = 'Caixa de Entrada'
-# colunas de entrada do quadro Reclamantes (ver SISTEMA/backend/app/whatsapp/funis.py)
-ETAPAS_ENTRADA = ('Caixa de Entrada', 'Campanha Fast-food', 'Campanha Supermercado',
-                  'Campanha Acidente de Trabalho', 'Campanha Geral')
+# colunas de entrada do quadro Produtores Rurais (ver SISTEMA/backend/app/whatsapp/funis.py)
+ETAPAS_ENTRADA = ('Caixa de Entrada', 'Campanha Prorrogação', 'Campanha Execução e Leilão',
+                  'Campanha Busca e Apreensão', 'Campanha Geral')
 ETAPA_QUENTE = 'Lead Quente'
 ETAPA_DESQUALIFICADO = 'Lead Desqualificado'
 FLUXO_REAQUECE = 'reaquecimento_quente'   # regua de mensagens
-FLUXO_LIGACAO = 'ligacao_agendar'         # respondeu, fila da doutora
+FLUXO_LIGACAO = 'ligacao_agendar'         # respondeu, fila do advogado
 CADENCIA = (0, 1, 3, 6)          # dias a partir da entrada na regua
 JANELA = (8, 20)
 MAX_POR_RODADA = 15      # trava anti-bloqueio: nunca disparar em rajada
@@ -147,7 +147,7 @@ def classificar_resposta(texto):
     env = dict(os.environ)
     env.pop('ANTHROPIC_API_KEY', None)         # assinatura, nunca API
     prompt = (
-        'Voce le respostas de leads de um escritorio trabalhista que defende trabalhadores.\n'
+        'Voce le respostas de leads de um escritorio que defende o produtor rural contra bancos.\n'
         'Classifique a mensagem abaixo em uma destas opcoes:\n'
         '  ja_tem_acao  = a pessoa diz que JA entrou com acao, ja tem advogado ou '
         'ja esta sendo atendida por outro escritorio\n'
@@ -267,35 +267,35 @@ def texto_toque(i, c):
     nome = _primeiro_nome(c['nome'])
     ola = f'Olá, {nome}!' if nome else 'Olá!'
     viol = c.get('violacao') or ''
-    sobre = f'sobre {viol}' if viol else 'sobre o que a empresa fez com você'
+    sobre = f'sobre {viol}' if viol else 'sobre a sua dívida com o banco'
 
     if i == 0:
         return (
-            f'{ola} Aqui é do Daniel Guimarães Advocacia, escritório trabalhista que defende o trabalhador.\n\n'
+            f'{ola} Aqui é do Daniel Guimarães Advocacia, escritório que defende o produtor rural nas dívidas com banco.\n\n'
             f'Você conversou com a gente {sobre} e o seu caso ficou marcado aqui como '
             'prioridade. Não sumi não, voltei justamente porque o que você contou não '
             'pode ficar parado.\n\n'
             'Preciso de duas respostas rápidas, pode ser em uma palavra:\n\n'
             '1) Você já entrou com alguma ação ou já tem advogado cuidando disso? '
             'Responda SIM ou NÃO.\n'
-            '2) Qual o melhor horário para a doutora te ligar, MANHÃ ou TARDE?\n\n'
-            'É uma ligação rápida e sem compromisso, e é ela quem vai te explicar o que '
-            'cabe no seu caso. Direito trabalhista tem prazo, e prazo que passa não volta.')
+            '2) Qual o melhor horário para o advogado te ligar, MANHÃ ou TARDE?\n\n'
+            'É uma ligação rápida e sem compromisso, para entender o seu caso e explicar o '
+            'caminho. Em dívida rural o prazo do banco corre, e prazo que passa não volta.')
     if i == 1:
         return (
             f'{ola} Passando aqui de novo, rapidinho.\n\n'
             'Você não chegou a me dizer o horário. Me manda só MANHÃ ou TARDE que eu já '
-            'deixo você na agenda da doutora.\n\n'
+            'deixo você na agenda do advogado.\n\n'
             'E se você já resolveu isso por outro caminho, me diz também. Aí eu encerro '
             'seu atendimento e paro de te chamar.')
     if i == 2:
         depo = (f'Dá uma olhada no depoimento de quem já passou por isso:\n{DEPOIMENTOS}\n\n'
                 if DEPOIMENTOS else '')
         return (
-            f'{ola} Muita gente acha que buscar os direitos não dá em nada e deixa passar. '
-            'Depois vê o colega de trabalho receber e se arrepende.\n\n'
+            f'{ola} Muito produtor acha que não adianta discutir com o banco e deixa a dívida '
+            'crescer. Depois vê o vizinho conseguir renegociar e se arrepende.\n\n'
             + depo +
-            'Se quiser falar com a doutora, é só me responder MANHÃ ou TARDE.')
+            'Se quiser falar com o advogado, é só me responder MANHÃ ou TARDE.')
     return (
         f'{ola} Essa é a última vez que te chamo, para não ficar enchendo seu WhatsApp.\n\n'
         'Seu caso continua registrado aqui com a gente. Se um dia quiser retomar, é só '

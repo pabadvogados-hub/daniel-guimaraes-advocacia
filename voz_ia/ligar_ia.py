@@ -31,7 +31,7 @@ UA = {"User-Agent": "Mozilla/5.0 esc-voz-ia"}
 
 def credencial():
     con = sqlite3.connect(DB, timeout=30)
-    nid = int(os.getenv("DAPI_NUMERO_ID") or 1)      # linha que liga (padrao: a linha de Reclamantes, id 1)
+    nid = int(os.getenv("DAPI_NUMERO_ID") or 1)      # linha que liga (padrao: a linha principal de Produtores Rurais, id 1)
     inst, chave = con.execute("select zapi_instance, zapi_token from wa_numeros where id=?", (nid,)).fetchone()
     return inst.split(":", 1)[1], chave
 

@@ -1,16 +1,11 @@
 # -*- coding: utf-8 -*-
 """CHECKLIST DE DOCUMENTOS PODADO PELA TRANSCRICAO DA REUNIAO.
 
-Problema que este modulo resolve (Advogada, 25/08/2026). O `CHECKLIST_PADRAO` do
-`cobranca_documentos.py` e uma lista FIXA no codigo, aplicada a todo cliente
-novo: o `cobranca_assinatura.py` chama o enroll sem passar checklist quando o
-cliente assina. Resultado, duas vezes:
-
-  - um cliente (08/2026): cobrado por B.O. de roubo e por TRCT, com o contrato
-    de trabalho AINDA EM VIGOR. Corrigido a mao pela Advogada.
-  - outro cliente (08/2026): cobrado por "Boletim de Ocorrencia do
-    roubo/sequestro" durante CINCO toques, quando na reuniao de fechamento ele
-    afirmou expressamente que NUNCA foi assaltado nem sequestrado.
+Problema que este modulo resolve. O `CHECKLIST_PADRAO` do `cobranca_documentos.py`
+(documentos da ANALISE INICIAL do produtor rural) e uma lista FIXA no codigo, aplicada a
+todo cliente novo: o `cobranca_assinatura.py` chama o enroll sem passar checklist quando o
+cliente assina. Sem poda, a automacao cobraria, por exemplo, laudo de perda de safra de quem
+disse que nao houve perda, ou carta do banco de quem nunca recebeu nenhuma.
 
 Cobrar documento impossivel queima a confianca do cliente e gasta toque de
 cobranca. A transcricao da reuniao ja tem a resposta; o checklist e que nao
@@ -286,8 +281,8 @@ def montar(nome, telefone, checklist, cid=None):
     Insumo: transcricao da reuniao; na falta, a Ficha do Cliente do intake.
     Caso comum: poda a lista base (so contradicao EXPRESSA remove).
     Caso especial: a lista base nao serve; o modelo escreve uma
-    lista propria do caso (a a equipe, gestante, recebeu cobranca de B.O. de
-    itens que nao se aplicam ao caso - nunca mais).
+    lista propria do caso (ex.: so busca e apreensao de maquina, CPR com trading,
+    divida de cooperativa sem cedula), para nunca cobrar item que nao se aplica.
 
     Retorna (itens, origem) quando ha lista confiavel;
     (None, motivo) quando NAO ha - e o chamador decide segurar a cobranca.
@@ -325,11 +320,12 @@ def montar(nome, telefone, checklist, cid=None):
     itens = list(checklist)
     prompt = (
         "Voce prepara a LISTA DE DOCUMENTOS que sera cobrada por WhatsApp de "
-        "um cliente do Daniel Guimarães Advocacia (escritorio trabalhista).\n\n"
+        "um cliente do Daniel Guimarães Advocacia (defesa do produtor rural contra bancos).\n\n"
         "Abaixo estao o RELATO DO CASO (transcricao da reuniao de fechamento "
-        "ou ficha do cliente) e a LISTA BASE, desenhada para o CASO TRABALHISTA "
-        "COMUM (verbas rescisorias, jornada, horas extras, intervalo, vinculo).\n\n"
-        "PASSO 1: decida pelo relato se o caso e trabalhista comum ou ESPECIAL (gestante, acidente de trabalho, doenca ocupacional, assedio, rescisao indireta por fato especifico).\n\n"
+        "ou ficha do cliente) e a LISTA BASE, desenhada para o CASO COMUM de "
+        "DIVIDA DE CREDITO RURAL com banco (cedulas de custeio/investimento, "
+        "prorrogacao, execucao, revisional).\n\n"
+        "PASSO 1: decida pelo relato se o caso e comum ou ESPECIAL (so busca e apreensao de maquina ou veiculo, CPR com trading ou revenda, divida com cooperativa sem cedula, empresa rural com CNPJ, consolidacao de imovel em alienacao fiduciaria).\n\n"
         "PASSO 2a, SE FOR COMUM: confira a lista base e aponte APENAS os "
         "itens que o relato CONTRADIZ EXPRESSAMENTE (o cliente disse que nao "
         "existe, nao aconteceu ou nao tem como fornecer). REGRAS RIGIDAS: "
@@ -338,16 +334,17 @@ def montar(nome, telefone, checklist, cid=None):
         "PASSO 2b, SE FOR ESPECIAL: a lista base NAO SERVE para este "
         "cliente. Monte uma lista NOVA com 4 a 7 itens de documentos e provas "
         "adequados a ESTE caso concreto: so peca o que a pessoa plausivelmente "
-        "tem (carteira de trabalho, exames e atestados, conversas com o "
-        "empregador, holerites, comprovantes); linguagem simples de WhatsApp, "
-        "sem juridiques, um item por linha, emoji discreto quando couber; "
+        "tem (contratos e cedulas, notificacoes do banco, documento do imovel "
+        "ou da maquina, comprovantes de pagamento, prova da perda da safra); linguagem simples de WhatsApp, "
+        "sem juridiques, um item por linha, sem emoji; "
         "nada de promessa de resultado; respeite o que o relato ja diz que "
-        "nao existe; inclua o item do e-mail se estiver na lista base; NUNCA inclua extrato bancario (regra do escritorio: extrato e pedido pessoalmente pela equipe em fase posterior porque cliente teme golpe quando a automacao pede, nunca pela automacao).\n\n"
+        "nao existe; inclua o item do e-mail se estiver na lista base; NUNCA inclua extrato da CONTA CORRENTE (regra do escritorio: cliente teme golpe quando a automacao pede; o demonstrativo da divida, fornecido pelo banco, pode). "
+        "Documentos do imovel e da producao (matricula, CCIR, ITR, CAR, DAP/CAF, notas fiscais, projeto tecnico) sao da FASE SEGUINTE: so inclua se o relato mostrar que sao indispensaveis ja.\n\n"
         "Responda SOMENTE JSON valido, sem cercas de codigo:\n"
-        '{"caso_motorista": true, "remover": [{"item": "...", "motivo": "...", '
+        '{"caso_comum": true, "remover": [{"item": "...", "motivo": "...", '
         '"trecho": "..."}]}\n'
         "ou\n"
-        '{"caso_motorista": false, "lista_nova": ["...", "..."]}\n\n'
+        '{"caso_comum": false, "lista_nova": ["...", "..."]}\n\n'
         "=== LISTA BASE (caso comum) ===\n"
         + "\n".join(f"- {i}" for i in itens)
         + "\n\n=== RELATO DO CASO ===\n" + texto[:100000])
@@ -373,7 +370,7 @@ def montar(nome, telefone, checklist, cid=None):
     def norm(t):
         return re.sub(r"[^a-z0-9]+", "", (t or "").lower())
 
-    if dados.get("caso_motorista") is False:
+    if dados.get("caso_comum", dados.get("caso_motorista")) is False:
         lista = dados.get("lista_nova") or []
         lista = [str(i).strip() for i in lista
                  if isinstance(i, str) and 8 <= len(str(i).strip()) <= 140]

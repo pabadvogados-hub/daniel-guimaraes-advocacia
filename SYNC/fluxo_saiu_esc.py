@@ -1,23 +1,28 @@
 # -*- coding: utf-8 -*-
-"""FLUXO "VOCE JA SAIU DA EMPRESA?" do Guimarães Advocacia.
+"""FLUXO "A DIVIDA JA VENCEU?" do Guimarães Advocacia (nome do arquivo herdado: fluxo_saiu).
 
-Quem estava trabalhando, ou nunca disse, quando falou com a gente recebe UMA mensagem escrita
-so para ele (mensagem_personalizada.py) perguntando se ainda esta na empresa ou ja saiu.
-Quem ja saiu vira QUENTISSIMO e o vendedor da vez recebe na hora um LIGAR AGORA com o caso
-(roteamento_vendedoras.py, equipe em VENDEDORES no .env). Sem vendedor cadastrado, o aviso vai
-para FLUXO_SAIU_RESUMO.
+Produtor rural que estava com a divida EM DIA, ou nunca disse, quando falou com a gente recebe UMA
+mensagem escrita so para ele (mensagem_personalizada.py) perguntando como esta a divida: em dia, ou
+ja venceu e o banco esta cobrando (execucao, leilao, busca e apreensao).
+Quem responde que JA ESTA EM COBRANCA vira QUENTISSIMO e o vendedor da vez recebe na hora um
+LIGAR AGORA com o caso (roteamento_vendedoras.py, equipe em VENDEDORES no .env). Sem vendedor
+cadastrado, o aviso vai para FLUXO_SAIU_RESUMO.
 
-REVISITA: quem respondeu que AINDA TRABALHA recebe a pergunta de novo 60 dias depois da resposta,
-porque quem esta empregado hoje pode ser o demitido de amanha. A mensagem lembra o que ele contou.
+CODIGOS HERDADOS (mantidos porque termometro e painel comercial leem esses valores):
+  'saiu'        = divida ja em cobranca (vencida, negativada, execucao, leilao, apreensao)
+  'trabalhando' = divida em dia / a vencer
+
+REVISITA: quem respondeu que ESTA EM DIA recebe a pergunta de novo 60 dias depois da resposta,
+porque safra ruim e preco baixo mudam a situacao de uma estacao para outra.
 
 Regras:
-- do contato MAIS ANTIGO para o mais novo (quem falou ha mais tempo tem mais chance de ja ter saido)
+- do contato MAIS ANTIGO para o mais novo
 - 30 por dia, no maximo 3 por minuto; aqui sai 1 por rodada do cron, espacado
 - dia util, das 9h as 18h
 - fora: cliente, Perdido/Desqualificado, contrato, sem caso, ja tem acao, pediu para parar,
   nunca escreveu, conversa ativa nos ultimos 3 dias
 - uma mensagem so; sem resposta, nao insiste
-- rescisao indireta: quem continua na empresa NAO e tratado como caso perdido (a revisita existe)
+- quem esta em dia NAO e tratado como caso perdido (a revisita existe)
 
 .env: FLUXO_SAIU_RESUMO (telefone que recebe o resumo e as copias; vazio = nao envia).
 
@@ -57,7 +62,7 @@ JANELA = (9, 18)
 MIN_ENTRE_ENVIOS = 20            # segundos: nunca mais de 3 por minuto
 FORA_ETAPA = ('Perdido', 'Perdido - Sem resposta', 'Perdido - Sem interesse', 'Lead Desqualificado',
               'Novo Cliente', 'Contrato / Assinatura', 'Assinado', 'Contrato no ZapSign')
-REVISITA_DIAS = int(os.getenv('FLUXO_REVISITA_DIAS', '60'))   # quem disse "ainda trabalho" volta depois disso
+REVISITA_DIAS = int(os.getenv('FLUXO_REVISITA_DIAS', '60'))   # quem disse "esta em dia" volta depois disso
 
 
 def agora_br():
@@ -80,19 +85,21 @@ JA_TEM = re.compile(r'(ja (tenho|to com|estou com|contratei) (um |uma )?advogad|
                     r'ja (tenho|tem) (um |uma )?(processo|acao)|ja com outro advogad)')
 PARE = re.compile(r'(nao (me )?(mande|manda|envie) mais|para de (me )?mandar|me tira|sai(r)? da lista|'
                   r'nao tenho interesse|nao quero mais|bloque)')
-TRABALHISTA = re.compile(r'(ajuda trabalhista|trabalh|empresa|patrao|chefe|gerente|carteira|registro|rescis|'
-                         r'acerto|hora extra|intervalo|folga|escala|acidente|afastad|inss|assedio|direito|'
-                         r'demiti|salario|ferias|fgts|fast food|lanchonete|supermercado|mercado|caixa)')
-# "sai" sem acento e ambiguo ("nao sai", "sai cedo pro trabalho"): so formas explicitas contam como saida
-NEGOU = re.compile(r'(nao sai|ainda nao sai|nunca sai)')
-SAIU = re.compile(r'(ja sai|sai de la|sai da empresa|sai dela|sai faz|sai tem|sai ha|sai em|sai no|sai na|'
-                  r'sai dia|sai mes|sai sim|sim,? sai|^sai[ .!]*$|^sai ja|'
-                  r'fui (demitido|mandado embora|dispensado|desligado)|me (mandaram embora|demitiram|dispensaram|'
-                  r'desligaram)|pedi (demissao|as contas|pra sair|para sair)|nao trabalho mais|'
-                  r'nao (to|estou) mais (la|nela|na empresa|nessa empresa|com eles)|desempregad|'
-                  r'acabou (o contrato|meu contrato)|fechou a empresa|a empresa fechou)')
-FICOU = re.compile(r'(ainda (to|estou|trabalho|continuo|sigo)|continuo (la|na)|to la ainda|sigo na mesma|'
-                   r'mesma empresa ainda|ainda na empresa|ainda nela|ainda sim|nao sai|ainda nao sai)')
+# Nome herdado (TRABALHISTA): aqui e o filtro de ASSUNTO do produtor rural / divida rural.
+TRABALHISTA = re.compile(r'(produtor|agricult|pecuar|fazend|sitio|lavoura|safra|plantio|colheita|soja|milho|'
+                         r'cafe|gado|rebanho|hectare|alqueire|credito rural|custeio|pronaf|pronamp|funcafe|cpr|'
+                         r'cedula|banco|cooperativa|prorroga|alonga|renegoci|divida|parcela|leilao|execucao|'
+                         r'busca e apreensao|trator|maquina|negativad|seca|geada|proagro)')
+# Mesma logica de app/whatsapp/coluna_lead.py (copiada de proposito: o backend nao importa o SYNC).
+# 'trabalhando' = em dia; 'saiu' = ja em cobranca.
+NEGOU = re.compile(r'(nao venceu|ainda nao venceu|nao esta vencid|nao ta vencid|nunca atrasei|'
+                   r'nao tem execucao|nao tem leilao|nao entraram na justica|nao entrou na justica)')
+SAIU = re.compile(r'(venceu|vencid|atrasad|atrasei|em atraso|nao consegui pagar|nao paguei|deixei de pagar|'
+                  r'negativad|nome sujo|serasa|spc|protest|cobranca judicial|entrou na justica|'
+                  r'entraram na justica|me processou|me executando|execucao|executad|leilao|leiloar|'
+                  r'busca e apreensao|apreend|tomaram|vao tomar|consolidac|penhor(a|aram)|bloque(io|aram))')
+FICOU = re.compile(r'(to em dia|estou em dia|esta em dia|ta em dia|pago em dia|vence (so )?(em|no|na|mes|ano)|'
+                   r'vai vencer|ainda vai vencer|a vencer|antes de vencer|ainda nao venceu|consegui pagar|paguei)')
 
 
 # ------------------------------------------------------------------ estado
@@ -116,7 +123,7 @@ def fila(con, estado):
     cli = {t8(t) for a, b in con.execute('select telefone, celular from jur_clientes') for t in (a, b)
            if t and len(t8(t)) == 8}
     nao = set(map(str, estado['nao_contatar']))
-    # revisita: disse "ainda trabalho" ha REVISITA_DIAS ou mais (no maximo 2 revisitas por pessoa)
+    # revisita: disse "esta em dia" ha REVISITA_DIAS ou mais (no maximo 2 revisitas por pessoa)
     corte = (agora_br() - timedelta(days=REVISITA_DIAS)).strftime('%Y-%m-%d %H:%M')
     revisitar = {k: v for k, v in estado['enviados'].items()
                  if v.get('resultado') == 'trabalhando' and (v.get('respondeu_em') or '9999') <= corte
@@ -141,7 +148,7 @@ def fila(con, estado):
         txt = sa(' '.join(deles))
         if JA_TEM.search(txt) or PARE.search(txt):
             continue
-        # so entra quem tem sinal de questao trabalhista (o quadro tem vendedor, banco, engano)
+        # so entra quem tem sinal de divida rural (o quadro tem vendedor, engano, outros assuntos)
         if not e_cam and not TRABALHISTA.search(txt):
             continue
         ult = con.execute("select max(criado_em) from wa_mensagens where conversa_id=?", (cid,)).fetchone()[0]
@@ -221,10 +228,10 @@ def enviar_proximo():
                                'resposta': lead['antes'].get('resposta') or ''}
         msg, prob = MP.escrever(ctx)
         if prob == 'nao_e_lead':
-            estado['nao_contatar'].append(lead['id'])      # a IA leu e viu que nao e lead trabalhista
+            estado['nao_contatar'].append(lead['id'])      # a IA leu e viu que nao e lead de produtor rural
             estado.setdefault('nao_e_lead', []).append({'id': lead['id'], 'nome': lead['nome']})
             salvar(estado)
-            print('#%d nao e lead trabalhista, fora da fila: %s' % (lead['id'], lead['nome']))
+            print('#%d nao e lead de produtor rural, fora da fila: %s' % (lead['id'], lead['nome']))
             continue
         if prob == 'llm_indisponivel':
             # sem IA o fluxo para em silencio: avisa FLUXO_SAIU_RESUMO uma vez por dia
@@ -232,7 +239,7 @@ def enviar_proximo():
             if estado.get('avisou_llm') != hoje:
                 estado['avisou_llm'] = hoje
                 salvar(estado)
-                zapi(RESUMO_TEL, '⚠️ O fluxo "já saiu da empresa?" parou: a IA não está respondendo, nem pela chave da '
+                zapi(RESUMO_TEL, 'ATENÇÃO: o fluxo "a dívida já venceu?" parou: a IA não está respondendo, nem pela chave da '
                           'API nem pelo Claude do servidor. Nenhuma mensagem foi enviada. Precisa olhar.')
             print('#%d nao enviado: a IA nao respondeu' % lead['id'])
             return
@@ -280,9 +287,10 @@ def classificar(texto, usar_ia=True):
 
 def classificar_ia(texto):
     """Resposta que a regra nao entendeu: a IA le e responde com uma palavra so."""
-    pedido = ('Um trabalhador recebeu a pergunta "voce ainda esta na mesma empresa ou ja saiu?" e '
-              'respondeu:\n\n"%s"\n\nResponda com UMA palavra: saiu (se ele deixou a empresa), trabalhando '
-              '(se continua la), parar (se pediu para nao receber mais mensagem) ou outro (se nao da para saber).'
+    pedido = ('Um produtor rural recebeu a pergunta "a divida com o banco ainda esta em dia ou ja venceu e o '
+              'banco esta cobrando?" e respondeu:\n\n"%s"\n\nResponda com UMA palavra: saiu (se a divida ja '
+              'venceu, esta negativado, ou ha execucao, leilao ou busca e apreensao), trabalhando (se esta em dia '
+              'ou ainda vai vencer), parar (se pediu para nao receber mais mensagem) ou outro (se nao da para saber).'
               % texto[:600])
     try:
         saida = MP.chamar(pedido, modelo=MP.MODELO_LEITURA, max_tokens=16)
@@ -319,28 +327,28 @@ def varrer():
                         " where conversa_id=?", (ult, int(cid)))
             # sobe de etapa no quadro, mas nunca rebaixa quem ja avancou
             con.execute("update wa_conversas set etapa='Lead Quente', atualizado_em=? where id=? "
-                        " and etapa in ('Caixa de Entrada','Campanha Fast-food','Campanha Supermercado',"
-                        "'Campanha Acidente de Trabalho','Campanha Geral','Contatado','Em Qualificação','')",
+                        " and etapa in ('Caixa de Entrada','Campanha Prorrogação','Campanha Execução e Leilão',"
+                        "'Campanha Busca e Apreensão','Campanha Geral','Contatado','Em Qualificação','')",
                         (datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S'), int(cid)))
             con.execute("insert into wa_mensagens (conversa_id, origem, autor, tipo, conteudo, midia_url, "
                         " criado_em) values (?,?,?,?,?,'',?)",
                         (int(cid), 'nota', 'fluxo:saiu', 'texto',
-                         '[FLUXO] Respondeu que já saiu da empresa. Virou lead quentíssimo, foi para Lead Quente '
+                         '[FLUXO] Respondeu que a dívida já está em cobrança. Virou lead quentíssimo, foi para Lead Quente '
                          'e %s foi avisado(a) para ligar agora.' % (vend['nome'] if vend else 'o time'),
                          datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')))
             con.commit()
             r = con.execute('select resumo, violacoes from lead_termometro where conversa_id=?',
                             (int(cid),)).fetchone() or ('', '')
             d = ''.join(c for c in v['tel'] if c.isdigit())
-            aviso = ('🔥🔥 *LIGAR AGORA · acabou de dizer que saiu da empresa*\n\n*%s*\n📱 https://wa.me/%s\n\n'
+            aviso = ('*LIGAR AGORA · acabou de dizer que a dívida está em cobrança*\n\n*%s*\nhttps://wa.me/%s\n\n'
                      'Respondeu agora: "%s"\n\nO caso: %s\n\nFalou com a gente pela primeira vez em %s.\n\n'
-                     '⏳ *É agora que ele decide.* Quem avisa que saiu e não recebe ligação no mesmo dia '
-                     'esfria e acaba procurando outro escritório, e a prescrição de 2 anos segue correndo. '
-                     'Leia a conversa antes de ligar.'
+                     '*É agora que ele decide.* Quem avisa que o banco está cobrando e não recebe ligação no mesmo '
+                     'dia esfria e acaba procurando outro escritório, e o prazo da execução ou do leilão segue '
+                     'correndo. Leia a conversa antes de ligar.'
                      % (v['nome'] or 'Sem nome', d, resposta[:200], (r[0] or '-')[:300], v['contato_desde']))
             ok = avisar_vendedora(cid, v, vend, aviso) if vend else False   # fora do horario: so a tarefa fixa
             time.sleep(2)
-            ok2, _ = zapi(RESUMO_TEL, aviso + ('\n\n👤 Foi para *%s*.' % vend['nome'] if vend else ''))   # copia
+            ok2, _ = zapi(RESUMO_TEL, aviso + ('\n\nFoi para *%s*.' % vend['nome'] if vend else ''))   # copia
             v['vendedora'] = vend['nome'] if vend else ''
             v['vendedora_avisada'] = ok
             v['pam_avisada'] = ok2
@@ -361,20 +369,20 @@ def resumo():
     env = [v for v in estado['enviados'].values() if v['enviado'].startswith(hoje)]
     tudo = list(estado['enviados'].values())
     saiu = [v for v in tudo if v.get('resultado') == 'saiu' and (v.get('respondeu_em') or '').startswith(hoje)]
-    L = ['📋 *Fluxo "já saiu da empresa?"* · %s' % agora_br().strftime('%d/%m'),
+    L = ['*Fluxo "a dívida já venceu?"* · %s' % agora_br().strftime('%d/%m'),
          'Enviadas hoje: %d | no total: %d' % (len(env), len(tudo)),
          'Responderam no total: %d' % sum(1 for v in tudo if v.get('resultado') or v.get('resposta_vista')),
-         '  já saíram: %d · ainda trabalham: %d · pediram para parar: %d · outras respostas: %d' % (
+         '  em cobrança: %d · em dia: %d · pediram para parar: %d · outras respostas: %d' % (
              sum(1 for v in tudo if v.get('resultado') == 'saiu'),
              sum(1 for v in tudo if v.get('resultado') == 'trabalhando'),
              sum(1 for v in tudo if v.get('resultado') == 'parar'),
              sum(1 for v in tudo if not v.get('resultado') and v.get('resposta_vista')))]
     if saiu:
-        L.append('\n🔥 Viraram quentíssimo hoje:')
+        L.append('\nViraram quentíssimo hoje:')
         L += ['• %s, com %s' % (v['nome'] or 'Sem nome', v.get('vendedora') or 'o time') for v in saiu]
     rev = [v for v in tudo if v.get('revisita') and v['enviado'].startswith(hoje)]
     if rev:
-        L.append('Revisitas de hoje (disseram que ainda trabalhavam, há 60 dias ou mais): %d' % len(rev))
+        L.append('Revisitas de hoje (disseram que estavam em dia, há 60 dias ou mais): %d' % len(rev))
     zapi(RESUMO_TEL, '\n'.join(L))
     print('\n'.join(L))
 
@@ -394,7 +402,7 @@ def mostrar_fila(n):
 def teste(fone):
     estado = carregar()
     con = sqlite3.connect('file:%s?mode=ro' % DB, uri=True, timeout=20)
-    zapi(fone, '🧪 *TESTE do fluxo "já saiu da empresa?"*\nAs próximas mensagens são o que os 3 primeiros da fila '
+    zapi(fone, '*TESTE do fluxo "a dívida já venceu?"*\nAs próximas mensagens são o que os 3 primeiros da fila '
                'receberiam. Nada foi enviado para eles.')
     for lead in fila(con, estado)[:3]:
         ctx = MP.contexto(con, lead['id'])

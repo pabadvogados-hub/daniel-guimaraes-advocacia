@@ -35,7 +35,7 @@ router = APIRouter(prefix='/api/comercial', tags=['comercial'])
 
 BANCO = '/opt/escritorio/SISTEMA/backend/sistema_esc.db'
 ESTADO_CONTRATACAO = '/opt/escritorio/SYNC/contratacao_state.json'
-PRODUTOS = ('trabalhista',)
+PRODUTOS = ('trabalhista',)                               # chave interna do produto PRODUTOR RURAL (ver produto_card.py)
 DIAS_PARADO = 2                                           # alerta de quem fechou e esta parado ha mais de 2 dias
 ESTADO_COMERCIAL = '/opt/escritorio/SYNC/comercial_state.json'      # robo da mesa: 'dona_atribuida' (quem conduziu)
 BASE = '/opt/escritorio/SYNC/comercial_base.json'
@@ -44,7 +44,7 @@ ENV = '/opt/escritorio/config/.env'
 INTEGRACOES = '/opt/escritorio/INTEGRACOES'
 VALIDADE = 600                      # sistema juridico e Meta: no maximo 10 min
 INICIO = date.fromisoformat(os.getenv('COMERCIAL_INICIO', '2026-11-01'))   # comeco da serie do comercial
-PIPES_ESC = (10, 11, 18, 20, 31)    # Reclamantes, Clientes, Producao, Contratacao, Palestra (ver whatsapp/funis.py)
+PIPES_ESC = (10, 11, 18, 20, 31)    # Produtores Rurais, Clientes, Producao, Contratacao, Palestra (ver whatsapp/funis.py)
 # Duas vagas de vendedor, configuraveis no .env (a equipe pode comecar sem vendedor; as vagas ficam prontas)
 # Fonte unica: VENDEDORES="Nome:email:telefone:meta:9-18,..." (a mesma do SYNC/roteamento_vendedoras.py).
 # Reserva: COMERCIAL_VENDEDOR_1/2 e COMERCIAL_VENDEDOR_1/2_EMAIL.
@@ -65,8 +65,11 @@ MOEDAS_EQUIPE_EXEMPLOS = {'Pausa': 'café especial, cinema, livraria, sobremesa'
                     'Encontro': 'jantar a dois, teatro, show, passeio', 'Grande experiência': 'dia de spa, um curso, um eletrônico'}
 TAREFA_PROTOCOLO = int(os.getenv('COMERCIAL_TAREFA_PROTOCOLO', '0') or 0)   # tipo de tarefa PROTOCOLO no sistema juridico (0 = nao usa)
 CONV = 'onsite_conversion.messaging_conversation_started_7d'
-TIPOS_RECLAMANTE = {'RECLAMANTE', 'RECLAMANTE - RECLAMATÓRIA TRABALHISTA', 'RECLAMANTE - TRABALHISTA',
-                    'RECLAMATÓRIA TRABALHISTA', 'TRABALHISTA'}
+# Tipos de processo (sistema juridico) que contam como produto principal: defesa do PRODUTOR RURAL.
+# Nome da constante mantido por compatibilidade. Ajuste aos tipos cadastrados no sistema juridico do escritorio.
+TIPOS_RECLAMANTE = {'PRODUTOR RURAL', 'CRÉDITO RURAL', 'CREDITO RURAL', 'PRORROGAÇÃO DE CRÉDITO RURAL',
+                    'ALONGAMENTO DE DÍVIDA RURAL', 'EMBARGOS À EXECUÇÃO', 'DEFESA EM EXECUÇÃO',
+                    'REVISIONAL BANCÁRIA', 'BUSCA E APREENSÃO', 'SUSPENSÃO DE LEILÃO'}
 HON = {'HONORÁRIOS FINAIS', 'HONORÁRIOS INICIAIS', 'HONORÁRIOS CONSULTORIAS', 'HONORÁRIOS POR MENSALIDADE', 'TMP',
        'HONORÁRIOS DE SUCUMBÊNCIA', 'AUDIENCIA FISICA'}
 EXITO = {'HONORÁRIOS FINAIS', 'HONORÁRIOS DE SUCUMBÊNCIA'}
@@ -78,10 +81,10 @@ FERIADOS = {date(2026, 10, 12), date(2026, 11, 2), date(2026, 11, 15), date(2026
 PERDAS = {'Perdido - Sem resposta': 'Não respondeu à régua', 'Perdido - Sem interesse': 'Disse que não quer',
           'Lead Desqualificado': 'Desqualificado (sem caso ou já tem advogado)', 'Perdido': 'Perdido'}
 # Rotulo legivel de cada origem de campanha (ver whatsapp/funis.py)
-ANUNCIO = {'Campanha Fast-food': 'Fast-food', 'Campanha Supermercado': 'Supermercado',
-           'Campanha Acidente de Trabalho': 'Acidente de trabalho', 'Campanha Geral': 'Trabalhista geral',
-           'Campanha Rescisão Indireta': 'Palestra rescisão indireta', 'Campanha Formulario': 'Formulário'}
-EMPRESA = re.compile(r'\b(LTDA|EIRELI|EPP|S/?A)\b|TRANSPORT|LOGIST|ENGENHARIA|EQUIPAMENTO|GEST[AÃ]O|COM[EÉ]RCIO|IND[UÚ]STRIA',
+ANUNCIO = {'Campanha Prorrogação': 'Prorrogação', 'Campanha Execução e Leilão': 'Execução e leilão',
+           'Campanha Busca e Apreensão': 'Busca e apreensão', 'Campanha Geral': 'Dívida rural geral',
+           'Campanha Palestra': 'Palestra crédito rural', 'Campanha Formulario': 'Calculadora/formulário'}
+EMPRESA = re.compile(r'\b(LTDA|EIRELI|EPP|S/?A)\b|BANCO|COOPERATIVA|SICREDI|SICOOB|CR[EÉ]DITO|COM[EÉ]RCIO|IND[UÚ]STRIA',
                      re.I)
 PLACEHOLDER = re.compile(r'nao informado|sobrenome|a confirmar', re.I)
 MESES = ('jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez')
@@ -183,15 +186,17 @@ CURTO = {'hoje': 'hoje', 'semana': 'esta semana', 'semana_passada': 'semana pass
 # vocabulario do produto: a tela e a mesma, so as palavras mudam
 VOC = {
     'trabalhista': {
-        'produto': 'Trabalhista', 'ico': '⚖', 'contrato': 'contrato', 'contratos': 'contratos', 'Contrato': 'Contrato',
+        'produto': 'Produtor Rural', 'ico': '⚖', 'contrato': 'contrato', 'contratos': 'contratos', 'Contrato': 'Contrato',
         'Contratos': 'Contratos', 'fechado': 'fechado', 'fechados': 'fechados', 'tit_contratos': 'Contratos fechados',
         'libera': 'libera quando o card entra em Distribuição', 'libera_quando': 'quando o card entra em Distribuição',
         'libera_card': 'Cada card que entra em Distribuição libera', 'Em_dist': 'Em distribuição', 'dist_txt': 'em Distribuição',
         'dist_desde': 'em Distribuição desde', 'a_dist': 'à distribuição', 'virar': 'virar processo', 'processos': 'processos',
         'fluxo': 'Do Fechou à Produção', 'honorario': 'honorário esperado', 'anuncios': 'campanhas do Meta',
-        'sit': ['Já saiu', 'Trabalha', 'Não disse'], 'sit_txt': ['já saiu', 'trabalha', 'não disse'],
-        'sit_pl': ['já saíram', 'trabalham', 'não disseram'], 'sit_card': ['Já saíram da empresa', 'Ainda trabalham', 'Não disseram'],
-        'primeira': '1ª ligação ao demitido', 'parte_sit': 'Parte dos leads que já saiu da empresa', 'conv_quem': 'reclamantes',
+        'sit': ['Em cobrança', 'Em dia', 'Não disse'], 'sit_txt': ['em cobrança', 'em dia', 'não disse'],
+        'sit_pl': ['estão em cobrança', 'estão em dia', 'não disseram'],
+        'sit_card': ['Em cobrança (execução, leilão, apreensão ou vencida)', 'Dívida em dia ou a vencer', 'Não disseram'],
+        'primeira': '1ª ligação ao lead em cobrança', 'parte_sit': 'Parte dos leads que já está em cobrança',
+        'conv_quem': 'produtores',
         'fases': [['dist', '⚖', 'Em distribuição'], ['revisao', '✎', 'Inicial em revisão'], ['zapsign', '✍', 'No ZapSign'],
                   ['docs', '⌛', 'Esperando documentos'], ['perdido', '✕', 'Perdidos']],
         'desde_inicio': 'desde agosto', 'status_dist': 'em distribuição', 'nenhum_esperando': 'Nenhum contrato esperando a Distribuição.',
@@ -205,7 +210,7 @@ VOC['trabalhista'].update({
     'fluxo_nota': 'Na semana em andamento a média conta só quem já chegou na Produção; quem ainda está na contratação aparece na última coluna.',
     'chegaram': 'Chegaram na Produção', 'na_dest': 'Na Produção', 'parados_sub': 'ainda na contratação: os que mais correm risco',
     'ate_dist': 'a distribuição', 'funil_sub': 'De lead ao card em Distribuição.', 'trab_sub': 'convertem bem menos · voltam na revisita',
-    'nd_sub': 'a IA pergunta na 1ª resposta', 'conv_sit': 'Reclamante, por situação', 'tempo_tit': 'Tempo no fluxo de contratação',
+    'nd_sub': 'a IA pergunta na 1ª resposta', 'conv_sit': 'Produtor, por situação da dívida', 'tempo_tit': 'Tempo no fluxo de contratação',
     'acompanha': 'Cada contrato que você acompanha até a Distribuição é comissão garantida no seu mês.',
     'sua_comissao': '💰 Sua comissão libera quando o card entra em Distribuição'})
 
@@ -477,7 +482,7 @@ CONECTIVO = ('e', 'de', 'da', 'do', 'das', 'dos', 'em', 'y')
 
 
 def _empresa(pasta):
-    """Empresa (a reclamada) pelo nome da pasta do processo: 'FULANO X EMPRESA' vira 'EMPRESA'.
+    """Parte contraria (banco/cooperativa) pelo nome da pasta do processo: 'FULANO X EMPRESA' vira 'EMPRESA'.
     Sigla curta em maiuscula fica como esta (JSL, VLI, MJL, LTDA), conectivo vai para minuscula."""
     partes = re.split(r'\s+[xX]\s+', str(pasta or ''), maxsplit=1)
     if len(partes) < 2 or not partes[1].strip():
@@ -507,7 +512,7 @@ def _casa_manual(m, c, a):
 
 
 def _distribuicao(contratos, processos):
-    """Casa o contrato com o processo de reclamante no sistema jurídico pelo nome do cliente (o do contrato; senao o do
+    """Casa o contrato com o processo de produtor rural no sistema jurídico pelo nome do cliente (o do contrato; senao o do
     WhatsApp). Mesma regra do atualizar_ate_hoje.py. Sem CNJ = ainda nao distribuido."""
     cand = [p for p in processos if p['type'] in TIPOS_RECLAMANTE and p['criado'] >= '2026-07-15']
     for c in contratos:
@@ -548,7 +553,7 @@ def _meta_gr_dias():
     return {}
 
 def _base_produto(base, produto):
-    """Base de analise do produto (um produto so: trabalhista)."""
+    """Base de analise do produto (um produto so: produtor rural, chave 'trabalhista')."""
     return base
 
 def _rateio(b, f):
@@ -772,7 +777,7 @@ def _liberacao(con, contratos, manuais=None):
 
 
 def _fora_da_esteira(con, base, processos, esteira, hoje):
-    """Contratos fechados FORA da esteira: processo de reclamante aberto no sistema jurídico desde o inicio da
+    """Contratos fechados FORA da esteira: processo de produtor rural aberto no sistema jurídico desde o inicio da
     serie, de pessoa fisica que nao passou pela esteira. Conta uma vez por cliente: data do 1o processo do periodo, numero
     CNJ do que tiver. Excecoes em base['fora_esteira_excluir'] (ex.: a parte contraria de um acordo, execucao de cliente
     antigo). Dona do card e origem vem da conversa do CRM com o mesmo nome."""
@@ -887,10 +892,16 @@ def _whatsapp(con, ini, fim):
     return out
 
 
+def _tag_principal(tag):
+    """Tag do lead da linha principal: 'PRODUTOR RURAL' (atual) ou 'RECLAMANTE' (cards antigos da base)."""
+    t = (tag or '').upper()
+    return 'PRODUTOR' in t or 'RECLAMANTE' in t
+
+
 def _situacoes(con, ids):
-    """Situacao do lead: 'Já saiu' se o termometro diz saiu OU a conversa tem as expressoes do fluxo
-    "voce ja saiu?" (o termometro troca a situacao por 'fechou'/'contatado' quando o lead avanca e o dado se perde);
-    'Trabalha' se o termometro diz trabalhando e nao ha sinal de saida; senao 'Não disse'."""
+    """Situacao da divida do lead: 'Em cobrança' se o termometro diz 'saiu' (codigo herdado = divida vencida ou
+    ja cobrada: execucao, leilao, busca e apreensao) OU a conversa tem esses sinais (coluna_lead.saiu_no_papo);
+    'Em dia' se o termometro diz 'trabalhando' (codigo herdado = divida em dia/a vencer); senao 'Não disse'."""
     ids = list(ids)
     term = {r['conversa_id']: r['situacao'] or '' for r in con.execute('select conversa_id, situacao from lead_termometro')}
     falas = {}
@@ -909,7 +920,7 @@ def _situacoes(con, ids):
                 saiu = coluna_lead.saiu_no_papo(falas.get(cid, []))
             except Exception:
                 saiu = False
-        out[cid] = 'Já saiu' if saiu else ('Trabalha' if t == 'trabalhando' else 'Não disse')
+        out[cid] = 'Em cobrança' if saiu else ('Em dia' if t == 'trabalhando' else 'Não disse')
     return out
 
 
@@ -922,7 +933,7 @@ def _leads(con, ini, fim, pipes=PIPES_ESC, sitfn=None):
     out = []
     for r in linhas:
         out.append({'cid': r['id'], 'lead': _nome(r['contato_nome']), 'quando': _br(r['criado_em']),
-                    'reclamante': bool(r['e_reclamante']) or 'RECLAMANTE' in r['tag'].upper(),
+                    'reclamante': bool(r['e_reclamante']) or _tag_principal(r['tag']),
                     'anuncio': r['origem'].startswith('Campanha'),
                     'origem': ANUNCIO.get(r['origem'], r['origem']) if r['origem'] else 'Orgânico/sem origem',
                     'situacao': sit.get(r['id'], 'Não disse'),
@@ -958,8 +969,8 @@ def _conversao(con, contratos, hoje, produto='trabalhista'):
         dia = _br(r['criado_em'])
         if not dia:
             continue
-        mot = bool(r['e_reclamante']) or 'RECLAMANTE' in r['tag'].upper()
-        chaves = [('produto', 'Reclamante' if mot else 'Outros assuntos'),
+        mot = bool(r['e_reclamante']) or _tag_principal(r['tag'])
+        chaves = [('produto', 'Produtor rural' if mot else 'Outros assuntos'),
                   ('anuncio', ANUNCIO.get(r['origem'], r['origem']) if r['origem'] else 'Orgânico/sem origem')]
         if mot:
             chaves.append(('situacao', sit.get(r['id'], 'Não disse')))
@@ -979,8 +990,8 @@ def _conversao(con, contratos, hoje, produto='trabalhista'):
     return out
 
 
-def _primeira_ligacao(con, leads, alvo='Já saiu'):
-    """Minutos entre o lead chegar e a 1a ligacao pela DAPI, para quem ja saiu da empresa."""
+def _primeira_ligacao(con, leads, alvo='Em cobrança'):
+    """Minutos entre o lead chegar e a 1a ligacao pela DAPI, para quem ja esta em cobranca (urgente)."""
     out = []
     for l in leads:
         if l['situacao'] != alvo or not l['quando']:
@@ -1483,7 +1494,7 @@ def montar(periodo='semana', forcar=False, produto='trabalhista'):
     da_serie = [c_ for c_ in validos if linhas_s and c_['pedido'][:7] >= linhas_s[0]['mes']]
     rr = {'safras': linhas_s, 'tot': tot, 'desde': linhas_s[0]['rot'] if linhas_s else None,
           'com_dinheiro': sum(1 for c_ in da_serie if entrou_c(c_) > 0)}
-    D['safras'] = {'tit': 'Trabalhista: o que de fato entrou, contrato por contrato (%d)' % len(da_serie),
+    D['safras'] = {'tit': 'Produtor rural: o que de fato entrou, contrato por contrato (%d)' % len(da_serie),
                    'sub': 'Êxito pago e a receber no sistema jurídico, pelo número do processo; cada processo conta uma vez.',
                    'cols': ['Safra', 'Cliente', 'Já entrou', 'Garantido a receber', 'Observação'],
                    'rows': [[mes_rot(c_['pedido'][:7]), c_['cliente'], brl(entrou_c(c_)), brl(garant_c(c_)), obs_c(c_)]
@@ -1492,7 +1503,7 @@ def montar(periodo='semana', forcar=False, produto='trabalhista'):
                l['etapa'], l['dona'] or '·'] for l in sorted(leads, key=lambda x: x['quando'] or agora, reverse=True)]
     cols_l = ['Chegou', 'Lead', 'Origem', 'Situação', 'Etapa', 'Card']
     D['leads'] = {'tit': 'Leads novos · %s (%d)' % (rotulo.lower(), n_leads),
-                  'sub': 'Conversas que chegaram nos boards do Guimarães Advocacia. Situação = o que o lead disse sobre o emprego.',
+                  'sub': 'Conversas que chegaram nos boards do Guimarães Advocacia. Situação = o que o lead disse sobre a cobrança da dívida.',
                   'cols': cols_l, 'rows': rows_l}
     for k, chave in ((S[0], 'leads_saiu'), (S[1], 'leads_trab'), (S[2], 'leads_nd')):
         D[chave] = {'tit': '%s · %d leads' % (k, sit[k]), 'cols': cols_l,
@@ -1565,7 +1576,7 @@ def montar(periodo='semana', forcar=False, produto='trabalhista'):
     desistiu = [c for c in desde if c['perdido']]
     fora_est = [c for c in contratos if c.get('fora_esteira')]
     D['fora_esteira'] = {'tit': 'Contratos fechados fora da esteira (%d)' % len(fora_est),
-                         'sub': 'Processo novo de reclamante aberto direto no sistema jurídico, sem passar pela esteira de contratação. '
+                         'sub': 'Processo novo de produtor rural aberto direto no sistema jurídico, sem passar pela esteira de contratação. '
                                 'Conta uma vez por cliente. Exceções na base de análise (fora_esteira_excluir).',
                          'cols': ['Aberto em', 'Cliente', 'Card', 'Processo', 'Origem'],
                          'rows': [[dm(c['data']), c['cliente'], c['quem'], c['cnj'] or '·', c['origem']] for c in reversed(fora_est)]}
@@ -1654,7 +1665,7 @@ def montar(periodo='semana', forcar=False, produto='trabalhista'):
         return [rot_cls.get(s['classe'], s['classe']), s['ref'] or '·', s['cnj'] or '·', s['fonte'][:60],
                 brl(s['cons']), brl(s['base']), brl(s['otim']), s['semestre']]
     D['prov_G'] = {'tit': 'Sentenças: carteira ganha (%d)' % len(sent),
-                   'sub': 'Sem desconto de recuperação judicial (no TRT6 só a 2ª reclamada está em RJ). Apuração de %s.' % base.get('apuracao', ''),
+                   'sub': 'Sem desconto de recuperação judicial. Apuração de %s.' % base.get('apuracao', ''),
                    'cols': cols_s, 'rows': [lin_s(s) for s in sorted(sent, key=lambda s: -s['base'])]}
     for k in ('provavel', 'possivel', 'acordo_em_pagamento'):
         L = [s for s in sent if s['classe'] == k]
@@ -1672,7 +1683,7 @@ def montar(periodo='semana', forcar=False, produto='trabalhista'):
                    'rows': [[o[0], o[1], brl(o[4]), brl(o[5])] for o in base.get('outras', [])],
                    'nota': 'Entra no caixa pela régua de quartis a partir de %d.' % int(g('ano_piso', 2027))}
     D['prov_F'] = {'tit': 'Outras áreas: casos novos',
-                   'sub': 'Completa o estoque até o ritmo histórico de %s por ano (reclamada, cível e parcerias, média de 2 anos).' % brl(g('exito_outras')),
+                   'sub': 'Completa o estoque até o ritmo histórico de %s por ano (cível, empresarial e parcerias, média de 2 anos).' % brl(g('exito_outras')),
                    'cols': ['Ano', 'Ritmo histórico', 'Estoque', 'Casos novos'],
                    'rows': [[a['ano'], brl(g('exito_outras')), brl(a['E']), brl(a['F'])] for a in prov['anos'] if a['ano'] > 2026]}
     D['prov_I'] = {'tit': 'Carteira em andamento (distribuídos, sem sentença)',
@@ -1751,7 +1762,7 @@ def montar(periodo='semana', forcar=False, produto='trabalhista'):
                    'advbox': fontes.get('advbox_em'), 'meta': fontes.get('meta_em'),
                    'base': base.get('apuracao'), 'erros': erros},
         'visao': {'custo': cp, 'retorno': ret, 'retorno_real': rr, 'conversao': len(per) / n_leads if n_leads else None,
-                  'conv_reclamante': next((x['pct'] for x in conversao['produto'] if x['nome'] == 'Reclamante'), None),
+                  'conv_reclamante': next((x['pct'] for x in conversao['produto'] if x['nome'] == 'Produtor rural'), None),
                   'contratos': len(per), 'por_quem': {q: sum(1 for c in per if c['quem'] == q) for q in sorted({c['quem'] for c in per})},
                   'da_base': sum(1 for c in per if c['da_base']), 'carteira': len(per) * valor, 'valor_contrato': valor,
                   'leads': n_leads, 'sit': sit, 'leads_anuncio': leads_anuncio, 'gasto': gasto_per,
@@ -2088,7 +2099,7 @@ def montar_geral(periodo='semana', forcar=False):
 
 
 def montar_unico(periodo='semana', forcar=False):
-    """Painel do Comercial (um produto so: trabalhista)."""
+    """Painel do Comercial (um produto so: produtor rural, chave 'trabalhista')."""
     return montar(periodo, forcar, 'trabalhista')
 
 

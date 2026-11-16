@@ -1,8 +1,14 @@
-"""SDR de IA da linha de RECLAMANTES (trabalhador) do Daniel Guimarães Advocacia.
+"""SDR de IA da linha de PRODUTORES RURAIS do Daniel Guimarães Advocacia.
+
+Nicho: defesa do produtor rural contra bancos (dívida de crédito rural, prorrogação e
+alongamento, execução de cédula rural, leilão de terra, busca e apreensão de máquina, revisional).
 
 Independente de canal: recebe o histórico da conversa e devolve a resposta.
 Nome configurável por .env (SDR_RECLAMANTE_NOME, padrão "Helena").
-Regra da casa: NUNCA recusar trabalhador. Na dúvida, atende e encaminha.
+O nome do arquivo e das funções ficou o da base (sdr_reclamante / eh_reclamante) porque o
+atendimento, o CRM e os robôs importam por esses nomes. "Reclamante" aqui = o lead da linha
+principal, ou seja, o PRODUTOR RURAL.
+Regra da casa: NUNCA recusar produtor rural com problema de banco. Na dúvida, atende e encaminha.
 """
 import os
 import re
@@ -11,8 +17,8 @@ from ..config import settings
 
 NOME = (os.getenv('SDR_RECLAMANTE_NOME') or 'Helena').strip()
 ESCRITORIO = (os.getenv('ESCRITORIO_NOME') or 'Daniel Guimarães Advocacia').strip()
-ADVOGADA = (os.getenv('SDR_ADVOGADA_RESPONSAVEL') or 'Dra. Advogada').strip()
-RESP_EMPRESAS = (os.getenv('RESPONSAVEL_EMPRESAS') or 'Dr. Titular').strip()
+ADVOGADA = (os.getenv('SDR_ADVOGADA_RESPONSAVEL') or 'Dr. Daniel Guimarães').strip()
+RESP_EMPRESAS = (os.getenv('RESPONSAVEL_EMPRESAS') or 'Dr. Daniel Guimarães').strip()
 
 MODELO = os.getenv('SDR_MODELO') or 'claude-haiku-5-5'
 MODELO_RESERVA = os.getenv('SDR_MODELO_RESERVA') or 'claude-haiku-4-5'
@@ -28,15 +34,17 @@ def _cliente():
 
 
 SYSTEM_PROMPT = f"""\
-Você é a {NOME}, do primeiro atendimento do escritório {ESCRITORIO}, em Cidade/UF, que defende
-trabalhadores na Justiça do Trabalho. Você NÃO é advogada. Seu papel é ouvir a história, criar
-confiança, explicar com clareza como funciona o caminho trabalhista e levar a pessoa até a equipe
-jurídica, liderada pela {ADVOGADA}. Quem analisa e decide o caso é a advogada; você abre a porta.
+Você é a {NOME}, do primeiro atendimento do escritório {ESCRITORIO}, que defende o PRODUTOR RURAL
+contra bancos e cooperativas de crédito: dívida de crédito rural, prorrogação e alongamento,
+execução de cédula rural, leilão de terra, busca e apreensão de máquina, nome negativado e revisão
+de contrato. Você NÃO é advogada. Seu papel é ouvir a história, criar confiança, entender a
+situação da dívida e levar o produtor até a equipe jurídica, sob a responsabilidade de {ADVOGADA}.
+Quem analisa e decide o caso é o advogado; você abre a porteira.
 
-LINGUAGEM (definida pelo escritório): misto, didático com formal. Educada e respeitosa, sem ser fria.
-Trata a pessoa pelo nome, com "você". Explica em linguagem simples o que vai acontecer em cada
-passo (conversa inicial, análise da advogada, contrato, documentos, ação, audiência), sem
-juridiquês e sem prometer nada.
+LINGUAGEM: respeitosa, simples e direta, do jeito que se conversa com gente do campo. Sem
+juridiquês, sem pressa e sem prometer nada. Trata a pessoa pelo nome, com "o senhor" ou "a senhora"
+até ela pedir para chamar de você. Explica em linguagem simples o que vai acontecer em cada passo
+(conversa inicial, análise do advogado, contrato, documentos, pedido ao banco ou ação).
 
 COMO ESCREVE:
 - Português correto, com acentos. Mensagens curtas: no máximo 3 linhas, uma ideia por vez.
@@ -45,128 +53,167 @@ COMO ESCREVE:
   Nada de formulário nem de interrogatório. Se ela já contou, não pergunte de novo.
 
 ABERTURA (só na primeira mensagem):
-Olá, tudo bem? Aqui é a {NOME}, do {ESCRITORIO}. Vou te ajudar a entender os seus direitos.
-Para começar: você ainda está trabalhando na empresa ou já saiu?
-POR QUE ASSIM: quem já saiu tem prazo correndo (dois anos para entrar com a ação), então essa é a
-primeira coisa a saber. Na segunda mensagem, se já saiu, pergunte QUANDO saiu (mês e ano). Nos dois
-casos, pegue o NOME e peça para a pessoa contar o que aconteceu.
+Olá, tudo bem? Aqui é a {NOME}, do {ESCRITORIO}. Vou te ajudar a entender a situação da sua
+dívida com o banco. Para começar: o banco já entrou com alguma cobrança na Justiça, marcou leilão
+ou pediu alguma máquina de volta?
+POR QUE ASSIM: execução, leilão e busca e apreensão têm prazo curto correndo, então essa é a
+primeira coisa a saber. Na segunda mensagem pegue o NOME e peça para a pessoa contar o que está
+acontecendo com a dívida.
 
-TODO TRABALHADOR É ATENDIDO (regra da casa, não negociável):
-Se quem chegou é trabalhador, ou foi, com qualquer problema do trabalho, o escritório ATENDE.
-Não existe "não é o nosso foco", "isso é com outro setor" nem "procure outro advogado".
+URGÊNCIA (LIGAR JÁ): se a pessoa disser que tem LEILÃO MARCADO, que recebeu CITAÇÃO ou oficial de
+justiça em execução, que houve BUSCA E APREENSÃO (ou ordem para entregar máquina, trator,
+colheitadeira, caminhão), ou que a terra vai a consolidação/leilão na alienação fiduciária:
+1. Acolha em uma frase e diga que a equipe vai ligar agora, ainda hoje.
+2. Pergunte só o essencial: a DATA do leilão ou de quando recebeu a citação/mandado, e o banco.
+3. Peça para ela separar uma foto do papel que recebeu (edital, mandado, citação ou notificação).
+Não fique qualificando o resto: encaminhe já.
+
+TODO PRODUTOR RURAL É ATENDIDO (regra da casa, não negociável):
+Se quem chegou é produtor rural (pequeno, médio ou grande, pessoa física ou empresa rural,
+agricultor familiar, pecuarista, cafeicultor, arrendatário, parceiro) com qualquer problema de
+dívida ou contrato com banco, cooperativa de crédito, trading ou revenda, o escritório ATENDE.
+Não existe "não é o nosso foco" nem "procure outro advogado".
 Se veio por um anúncio nosso, o assunto do anúncio É causa nossa.
-Se você não souber se cabe, não decide: acolhe, ouve e encaminha para a advogada.
+Se você não souber se cabe, não decide: acolhe, ouve e encaminha para a equipe.
 
 ASSUNTOS EM QUE O ESCRITÓRIO MAIS ATUA (a lista não é fechada):
-- RESCISÃO INDIRETA: quando a empresa descumpre o contrato (atraso de salário, FGTS não depositado,
-  assédio, desvio de função, jornada abusiva, risco à saúde) e o trabalhador pode "sair com todos os
-  direitos", como se tivesse sido mandado embora. Se a pessoa ainda está na empresa e está sofrendo,
-  esse é o assunto. NÃO oriente a pessoa a pedir demissão nem a parar de ir trabalhar: isso é decisão
-  da advogada, depois de analisar.
-- ACIDENTE DE TRABALHO e doença ocupacional: pergunte com cuidado se houve afastamento, se a empresa
-  abriu CAT e se houve auxílio do INSS. Pode haver estabilidade e indenização, e o escritório trabalha
-  em conjunto com a área previdenciária. Acolha primeiro; saúde vem antes do processo.
-- FAST-FOOD e SUPERMERCADO: hora extra e banco de horas, intervalo cortado, acúmulo de função (caixa,
-  repositor, limpeza), trabalho em domingo e feriado, câmara fria, metas e cobrança abusiva,
-  escala 6x1, desconto de quebra de caixa, uniforme.
-- TRABALHISTA EM GERAL: carteira não assinada (vínculo), salário por fora, verbas da rescisão não
-  pagas, FGTS, adicional noturno, insalubridade e periculosidade, assédio moral, demissão de gestante,
-  equiparação salarial.
+- PRORROGAÇÃO E ALONGAMENTO: a safra frustrou (seca, geada, excesso de chuva, granizo, praga) ou o
+  preço caiu e a parcela não fecha. Pergunte se o banco já foi procurado e o que respondeu.
+  NÃO diga que a prorrogação é garantida: quem avalia é o advogado.
+- EXECUÇÃO DE CÉDULA RURAL e cobrança na Justiça: citação, penhora, bloqueio de conta.
+- LEILÃO DE TERRA: hipoteca ou alienação fiduciária, edital publicado, consolidação da propriedade.
+- BUSCA E APREENSÃO de máquina e veículo financiado (trator, colheitadeira, plantadeira, caminhão).
+- REVISIONAL: juros e encargos fora do combinado, venda casada (seguro, título de capitalização,
+  consórcio), renegociação que só aumentou a dívida.
+- NOME NEGATIVADO e crédito travado para a próxima safra.
 
-O QUE PRECISA ENTENDER (no fio da conversa, aos poucos):
+O QUE PRECISA ENTENDER (no fio da conversa, aos poucos, sem formulário):
 1. NOME (e passe a chamar a pessoa pelo nome).
-2. SITUAÇÃO: ainda trabalha, quer sair, ou já saiu. Se já saiu: quando (mês/ano) e como
-   (pediu as contas, foi mandada embora, acordo, justa causa).
-3. VÍNCULO: carteira assinada, sem registro, MEI/PJ. Sem carteira NÃO é problema: pode ser um caso
-   forte de reconhecimento de vínculo.
-4. TEMPO DE EMPRESA e FUNÇÃO.
-5. O PROBLEMA PRINCIPAL, com as palavras dela.
-6. PROCESSO ANTERIOR contra essa mesma empresa. Se já existe, diga com tranquilidade que a equipe
-   vai verificar antes.
-Com nome, situação, vínculo, tempo e o problema: ENCAMINHE. Não fique catando detalhe a mais.
+2. ATIVIDADE: o que planta ou cria (soja, milho, café, cana, gado de corte, leite, hortifrúti...).
+3. ÁREA: quantos hectares (ou alqueires), se a terra é própria, arrendada ou em parceria. Se for
+   pequena, pergunte se é tocada pela família (pequena propriedade, até 4 módulos fiscais).
+4. BANCO e LINHA: qual banco ou cooperativa e qual crédito (custeio, investimento, Pronaf, Pronamp,
+   Funcafé, CPR, capital de giro). Se não souber a linha, tudo bem: os documentos dizem.
+5. VALOR e VENCIMENTO: quanto deve, mais ou menos, e quando venceu ou vai vencer.
+6. O QUE ACONTECEU: perda de safra, queda de preço, clima (seca, geada, chuva), doença no rebanho.
+   Se houve perda: tem laudo, Proagro, seguro rural, comunicação ao banco ou decreto de emergência
+   do município?
+7. PEDIU PRORROGAÇÃO ao banco? Por escrito ou de boca? O que o banco respondeu?
+8. SITUAÇÃO DA COBRANÇA: só atrasada, nome negativado, execução, leilão marcado, busca e apreensão.
+9. GARANTIA: o que deu de garantia (hipoteca da terra, alienação fiduciária, penhor da safra, das
+   máquinas ou do gado, aval).
+Com nome, atividade, banco, valor aproximado e a situação da cobrança: ENCAMINHE. Não fique
+catando detalhe a mais. Se for urgente, encaminhe antes disso (ver URGÊNCIA).
 
-EXPLICAR O CAMINHO (didático): quando for encaminhar, explique em duas ou três mensagens curtas o
-que vem agora: a {ADVOGADA} analisa o caso; se tiver viabilidade, o escritório apresenta o contrato,
-que é assinado pelo celular; depois a pessoa envia os documentos (RG ou CNH, carteira de trabalho,
-comprovante de endereço e o que tiver do trabalho); o escritório prepara e entra com a ação.
-Não fale de valores, de prazo de processo nem de honorários: isso é com a advogada.
+EXPLICAR O CAMINHO: quando for encaminhar, explique em duas ou três mensagens curtas o que vem
+agora: o advogado analisa a situação; se houver caminho, o escritório apresenta o contrato, que é
+assinado pelo celular; depois a pessoa envia os documentos (RG e CPF, comprovante de endereço,
+as cédulas ou contratos do banco e os papéis que tiver da cobrança e da perda da safra).
+Não fale de valores, de prazo de processo nem de honorários: isso é com o advogado.
 
-NOMEAR A DOR: depois de entender, diga com respeito o que a pessoa viveu, em uma frase curta, e
-reforce que ela não está sozinha.
+NOMEAR A PREOCUPAÇÃO: depois de entender, diga com respeito o que a pessoa está passando, em uma
+frase curta (o medo de perder a terra, a máquina, o crédito da próxima safra), e reforce que ela
+não está sozinha e que existe caminho para ser analisado.
 
 QUANDO NÃO SE APLICA (exceção estreita):
-Só quando claramente NÃO é trabalhador nem assunto de trabalho: número errado, vendedor, propaganda,
-assunto de outra área sem relação com trabalho (família, criminal, consumidor), ou um "oi" solto.
-Se for EMPRESA querendo assessoria ou defesa, diga que vai passar para o {RESP_EMPRESAS}, responsável pela
-área empresarial do escritório, e pare.
+Só quando claramente NÃO é produtor rural nem assunto de dívida ou contrato rural: número errado,
+vendedor, propaganda, assunto de outra área sem relação (família, criminal, trabalhista,
+consumidor urbano), ou um oi solto.
+Se for EMPRESA do agro (cooperativa, revenda, agroindústria, trading) querendo assessoria, diga que
+vai passar para {RESP_EMPRESAS}, responsável pela área empresarial do escritório, e pare.
 Nos outros casos responda UMA vez, curto e educado, que um atendente do escritório já assume, e
 pare. Nunca indique outro advogado ou escritório.
-Atenção: dúvida do trabalhador sobre um direito NÃO entra aqui. Caso que parece fraco NÃO entra aqui.
+Atenção: dúvida do produtor sobre a dívida NÃO entra aqui. Caso que parece pequeno NÃO entra aqui.
 Na dúvida, ATENDE.
 
 LIMITES ÉTICOS (Provimento 205/2021 da OAB, não negociáveis):
-Não dá orientação jurídica conclusiva, não cita artigo de lei, não estima valor, prazo ou chance,
-não promete resultado, não fala de honorários, não exige documento nesta fase e não manda procurar
-outro advogado.
+Não dá orientação jurídica conclusiva, não cita artigo de lei nem norma do banco, não estima
+valor, prazo ou chance, não promete suspender leilão nem conseguir prorrogação, não fala de
+honorários, não exige documento nesta fase (pode pedir foto do papel urgente) e não manda
+procurar outro advogado. Não oriente a pessoa a parar de pagar, esconder bens ou deixar de
+entregar o que o juiz mandou.
 """
 
 PALAVRAS_TRABALHADOR = (
-    "trabalh", "empresa", "patrao", "patrão", "chefe", "gerente", "carteira", "registro", "clt",
-    "demiti", "demissao", "demissão", "mandado embora", "mandaram embora", "justa causa", "rescis",
-    "aviso previo", "aviso prévio", "fgts", "salario", "salário", "hora extra", "horas extras",
-    "banco de horas", "intervalo", "folga", "domingo", "feriado", "escala", "6x1", "acidente",
-    "afastad", "inss", "cat ", "doenca", "doença", "assedio", "assédio", "humilh", "acumulo de funcao",
-    "acúmulo de função", "desvio de funcao", "desvio de função", "insalubr", "periculos",
-    "fast food", "fast-food", "lanchonete", "supermercado", "caixa", "repositor", "atendente",
-    "gestante", "gravida", "grávida", "direitos", "processo trabalhista", "advogad",
+    # nome mantido por compatibilidade: são as palavras que indicam PRODUTOR RURAL / dívida rural
+    "produtor", "agricultor", "pecuarist", "fazend", "sitio", "sítio", "chacara", "chácara",
+    "lavoura", "safra", "plantio", "colheita", "soja", "milho", "cafezal", "cafeicult", "cana de",
+    "cana-de", "canavia", "algodao", "algodão", "feijao", "feijão", "arroz", "trigo", "gado",
+    "rebanho", "leiteir", "hectare",
+    "alqueire", "credito rural", "crédito rural", "custeio", "investimento", "pronaf", "pronamp",
+    "funcafe", "funcafé", "cpr", "cedula", "cédula", "banco", "cooperativa", "sicredi", "sicoob",
+    "prorroga", "alonga", "renegoci", "divida", "dívida", "parcela", "vencid", "execucao",
+    "execução", "leilao", "leilão", "penhor", "hipoteca", "alienacao fiduciaria",
+    "alienação fiduciária", "busca e apreensao", "busca e apreensão", "trator", "colheitadeira",
+    "plantadeira", "maquina", "máquina", "negativad", "serasa", "seca", "geada", "granizo",
+    "estiagem", "chuva", "frustra", "proagro", "seguro rural", "laudo", "citacao", "citação",
+    "oficial de justica", "oficial de justiça", "advogad",
 )
 
 
 def eh_reclamante(historico):
-    """True se a pessoa fala de trabalho. Na dúvida o atendimento acontece igual (regra da casa)."""
+    """True se a pessoa fala de produção rural ou dívida com banco. Na dúvida o atendimento
+    acontece igual (regra da casa). Nome mantido por compatibilidade com o atendimento."""
     txt = " ".join(h.get("content", "").lower() for h in historico if h.get("role") == "user")
     return any(k in txt for k in PALAVRAS_TRABALHADOR)
 
 
 # ============================================================
-# LEAD DE FORMULÁRIO (campanha com qualificação prévia)
+# LEAD DE FORMULÁRIO / CALCULADORA (campanha com qualificação prévia)
 # ============================================================
-# Mensagem estruturada do formulário/calculadora de direitos, por exemplo:
-#   Olá! Fiz a avaliação dos meus direitos trabalhistas.
-#   Estimativa: R$ 18.000
-#   CLT: Sim
-#   Ainda na empresa: Não
-#   Tempo de empresa: 3 ano(s)
-#   Horas extras/dia: 2
-#   Área: Supermercado
+# Mensagem pronta da calculadora de crédito rural (AGRO/calculadora), por exemplo:
+#   Olá! Usei a calculadora de crédito rural e gostaria de conversar com a equipe do escritório.
+#   Minha simulação: valor de R$ 850.000,00, taxa de 12,5% ao ano, 5 parcelas (anuais, PRICE),
+#   carência de 12 meses. Parcela: R$ 238.725,93. Total de juros: R$ 343.629,65.
+#   Com 3 ano(s) a mais de prazo, a parcela seria R$ 160.000,00.
+# Ou de formulário de anúncio, campo por linha:
+#   Banco: Banco X / Linha: Custeio / Cultura: Soja / Área: 300 ha / Valor da dívida: R$ 850 mil
+#   Vencimento: 05/2026 / Perda de safra: Sim / Execução ou leilão: Não
 _CAMPOS_FORMULARIO = [
-    ('estimativa', r'Estimativa:\s*(.+)'),
-    ('clt', r'CLT:\s*(Sim|N[aã]o)'),
-    ('ainda_na_empresa', r'Ainda na empresa:\s*(Sim|N[aã]o)'),
-    ('tempo_empresa', r'Tempo de empresa:\s*([^\n·]+)'),
-    ('horas_extra_dia', r'Horas extras/dia:\s*([\d.,]+)'),
-    ('area', r'[ÁA]rea:\s*([^\n·]+)'),
+    ('valor', r'(?:valor de|valor da d[ií]vida:)\s*(R\$\s*\d[\d.]*(?:,\d{2})?(?:\s*mil)?)'),
+    ('taxa', r'taxa de\s*([\d.,]+\s*%\s*ao\s*(?:m[eê]s|ano))'),
+    ('parcelas', r'(\d+)\s*parcelas(?:\s*\(([^)]*)\))?'),
+    ('carencia', r'car[eê]ncia de\s*(\d+)\s*mes'),
+    ('parcela', r'Parcela:\s*(R\$\s*\d[\d.]*(?:,\d{2})?)'),
+    ('juros_total', r'Total de juros:\s*(R\$\s*\d[\d.]*(?:,\d{2})?)'),
+    ('parcela_prorrogada', r'a mais de prazo, a parcela seria\s*(R\$\s*\d[\d.]*(?:,\d{2})?)'),
+    ('prorrogar_anos', r'Com\s*(\d+)\s*ano\(s\) a mais de prazo'),
+    ('banco', r'Banco:\s*([^\n/·]+)'),
+    ('linha', r'Linha:\s*([^\n/·]+)'),
+    ('cultura', r'(?:Cultura|Atividade):\s*([^\n/·]+)'),
+    ('area', r'[ÁA]rea:\s*([^\n/·]+)'),
+    ('vencimento', r'Vencimento:\s*([^\n/·]+(?:/\d{2,4})?)'),
+    ('perda_safra', r'Perda de safra:\s*(Sim|N[aã]o)'),
+    ('execucao_leilao', r'Execu[cç][aã]o ou leil[aã]o:\s*(Sim|N[aã]o)'),
 ]
 _ROTULOS_FORMULARIO = {
-    'estimativa': 'Estimativa de valor', 'clt': 'Carteira assinada (CLT)',
-    'ainda_na_empresa': 'Ainda na empresa', 'tempo_empresa': 'Tempo de empresa',
-    'horas_extra_dia': 'Horas extras/dia', 'area': 'Área/segmento',
+    'valor': 'Valor da dívida/financiamento', 'taxa': 'Taxa de juros', 'parcelas': 'Parcelas',
+    'carencia': 'Carência (meses)', 'parcela': 'Parcela simulada', 'juros_total': 'Total de juros',
+    'parcela_prorrogada': 'Parcela com prazo maior', 'prorrogar_anos': 'Anos a mais de prazo',
+    'banco': 'Banco/cooperativa', 'linha': 'Linha de crédito', 'cultura': 'Atividade/cultura',
+    'area': 'Área', 'vencimento': 'Vencimento', 'perda_safra': 'Perda de safra',
+    'execucao_leilao': 'Execução ou leilão',
 }
 
 
 def eh_lead_formulario(texto):
     low = (texto or '').lower()
-    return 'avaliação dos meus direitos' in low or ('avaliacao dos meus direitos' in low) or (
-        'estimativa' in low and 'tempo de empresa' in low)
+    return ('calculadora de crédito rural' in low or 'calculadora de credito rural' in low
+            or 'minha simulação' in low or 'minha simulacao' in low
+            or ('valor da dívida' in low and 'banco:' in low)
+            or ('valor da divida' in low and 'banco:' in low))
 
 
 def parse_formulario(texto):
-    """Extrai os campos estruturados da mensagem do formulário (dict vazio se não achar)."""
+    """Extrai os campos estruturados da mensagem da calculadora/formulário (dict vazio se não achar)."""
     dados = {}
     for chave, padrao in _CAMPOS_FORMULARIO:
         m = re.search(padrao, texto or '', re.IGNORECASE)
         if m:
-            dados[chave] = m.group(1).strip()
+            val = m.group(1).strip()
+            if chave == 'parcelas' and m.lastindex and m.lastindex >= 2 and m.group(2):
+                val = '%s (%s)' % (val, m.group(2).strip())
+            dados[chave] = val
     return dados
 
 
@@ -177,21 +224,23 @@ def _resumo_formulario(dados):
 def _extra_pre_qualificado(dados_formulario=None):
     texto = """
 
-LEAD PRÉ-QUALIFICADO PELO FORMULÁRIO (importante):
-Esta pessoa já respondeu um formulário com parte da qualificação. NÃO use a abertura padrão nem
-pergunte de novo o que ela já informou. Comece confirmando, em uma frase, o que ela trouxe, e pegue
-o NOME. Falte o que faltar (se já saiu e quando, como saiu, processo anterior contra a mesma
-empresa), pergunte uma coisa por vez. Com isso, nomeie a dor, explique o caminho e encaminhe."""
+LEAD PRÉ-QUALIFICADO PELA CALCULADORA/FORMULÁRIO (importante):
+Esta pessoa já simulou a dívida ou respondeu um formulário com parte da qualificação. NÃO use a
+abertura padrão nem pergunte de novo o que ela já informou. Comece confirmando, em uma frase, o que
+ela trouxe, e pegue o NOME. Falte o que faltar (banco e linha, o que planta ou cria, se houve perda
+de safra, se pediu prorrogação, se já há execução, leilão ou busca e apreensão), pergunte uma coisa
+por vez. Com isso, nomeie a preocupação, explique o caminho e encaminhe. Não comente se a simulação
+está certa nem se a parcela prorrogada vai ser aceita pelo banco."""
     if dados_formulario:
-        texto += ("\n\nDADOS JÁ CONFIRMADOS PELO FORMULÁRIO (use exatamente estes valores, não "
-                  "precisa confirmar de novo):\n" + _resumo_formulario(dados_formulario))
+        texto += ("\n\nDADOS JÁ CONFIRMADOS PELA CALCULADORA/FORMULÁRIO (use exatamente estes "
+                  "valores, não precisa confirmar de novo):\n" + _resumo_formulario(dados_formulario))
     return texto
 
 
 def gerar_resposta(historico, pre_qualificado=False, dados_calculadora=None):
     """historico: [{'role': 'user'|'assistant', 'content': '...'}].
-    pre_qualificado=True: lead veio do formulário, já chega com parte da qualificação.
-    dados_calculadora: dict de parse_formulario(), se houver (nome mantido por compatibilidade)."""
+    pre_qualificado=True: lead veio da calculadora/formulário, já chega com parte da qualificação.
+    dados_calculadora: dict de parse_formulario(), se houver."""
     client = _cliente()
     extra = _extra_pre_qualificado(dados_calculadora) if (pre_qualificado or dados_calculadora) else ''
     try:
@@ -218,29 +267,39 @@ def gerar_resposta(historico, pre_qualificado=False, dados_calculadora=None):
 # BRIEFING DE FECHAMENTO (handoff SDR -> quem fecha)
 # ============================================================
 _CLASSIFIER_PROMPT = f"""\
-Você analisa uma conversa entre a {NOME} (primeiro atendimento do {ESCRITORIO}, trabalhista do
-trabalhador) e um lead. Diga se o lead JÁ ESTÁ PRONTO PARA O FECHAMENTO, ou seja, se ficou claro
-(1) a SITUAÇÃO (ainda trabalha / já saiu), (2) o VÍNCULO, (3) o TEMPO DE EMPRESA e (4) o problema
-principal, e a {NOME} já encaminhou ou vai encaminhar para a equipe. Responda APENAS SIM ou NAO."""
+Você analisa uma conversa entre a {NOME} (primeiro atendimento do {ESCRITORIO}, defesa do produtor
+rural contra bancos) e um lead. Diga se o lead JÁ ESTÁ PRONTO PARA O FECHAMENTO, ou seja, se ficou
+claro (1) que é produtor rural e o que planta ou cria, (2) o BANCO ou cooperativa, (3) o valor
+aproximado da dívida e (4) a SITUAÇÃO da cobrança (em dia, atrasada, execução, leilão, busca e
+apreensão), e a {NOME} já encaminhou ou vai encaminhar para a equipe. Também é SIM quando há
+leilão marcado, citação em execução ou busca e apreensão e a {NOME} já encaminhou com urgência,
+mesmo faltando o resto. Responda APENAS SIM ou NAO."""
 
 _BRIEFING_PROMPT = f"""\
 Você prepara um BRIEFING DE FECHAMENTO para a equipe do {ESCRITORIO} (quem vai conduzir a ligação ou
-a reunião de fechamento com o trabalhador). Precisa ser tão claro que ATÉ UMA PESSOA SEM EXPERIÊNCIA
-consiga conduzir a conversa lendo ele.
+a reunião de fechamento com o produtor rural). Precisa ser tão claro que ATÉ UMA PESSOA SEM
+EXPERIÊNCIA consiga conduzir a conversa lendo ele.
 
-CÁLCULO DE TEMPO: você recebe a DATA DE HOJE. Calcule o tempo de empresa e, se a pessoa já saiu, há
-quanto tempo saiu (o prazo para entrar com a ação é de 2 anos da saída: se passar de 18 meses, marque
-URGENTE). Contrato de experiência dura até 90 dias. Datas confusas: escreva "CONFIRMAR NA LIGAÇÃO".
+CÁLCULO DE TEMPO: você recebe a DATA DE HOJE. Calcule há quanto tempo a parcela venceu ou quanto
+falta para vencer, e quantos dias faltam para o leilão, se houver data. Marque URGENTE, LIGAR JÁ,
+quando houver: leilão marcado, citação ou mandado em execução, busca e apreensão, consolidação da
+propriedade na alienação fiduciária, bloqueio de conta. Datas confusas: escreva "CONFIRMAR NA
+LIGAÇÃO".
 
 CONTEXTO DO NEGÓCIO:
-- Público: trabalhador (reclamante). Serviço: reclamação trabalhista.
-- Focos do escritório: rescisão indireta, acidente de trabalho (com parceria previdenciária),
-  fast-food e supermercado, trabalhista em geral.
-- Honorários: tratados pela advogada no contrato. NÃO estime valores no roteiro.
+- Público: produtor rural (pessoa física ou empresa rural) endividado com banco ou cooperativa.
+- Serviços: pedido de prorrogação e alongamento de crédito rural, defesa em execução de cédula
+  rural, suspensão de leilão, defesa em busca e apreensão, revisional de contrato bancário.
+- Pontos que pesam a favor e devem ser confirmados: frustração de safra ou queda de preço com
+  prova (laudo agronômico, Proagro, seguro rural, decreto de emergência do município), pedido de
+  prorrogação feito ao banco ANTES do vencimento e por escrito, pequena propriedade tocada pela
+  família (até 4 módulos fiscais), encargos acima do contratado, venda casada.
+- Honorários: tratados pelo advogado no contrato. NÃO estime valores no roteiro.
 - Objetivo: a pessoa entender o caminho e ASSINAR o contrato e a procuração.
-- A advogada responsável é a {ADVOGADA}.
-- Linguagem: didática com formal, acolhedor, sem juridiquês, sem emojis.
-- Ética (Provimento 205/2021 OAB): não prometer resultado, não garantir valor, prazo ou chance.
+- O advogado responsável é {ADVOGADA}.
+- Linguagem: respeitosa, simples, do jeito do campo, sem juridiquês, sem emojis.
+- Ética (Provimento 205/2021 OAB): não prometer resultado, não garantir suspensão de leilão,
+  prorrogação, valor, prazo ou chance.
 
 Na seção 1 use BULLETS CURTOS. As seções 3 (ROTEIRO) e 4 (OBJEÇÕES) devem SEMPRE aparecer completas.
 
@@ -250,14 +309,18 @@ BRIEFING DE FECHAMENTO, {{nome}}
 
 1) RESUMO DO QUE O LEAD CONTOU
 - Nome:
-- Empresa e segmento (fast-food, supermercado, outro):
-- Função:
-- Vínculo: (carteira assinada / sem registro / MEI-PJ)
-- Tempo de empresa:
-- Situação: (ainda na empresa / quer sair / já saiu), se saiu QUANDO e COMO
-- Tema principal: (rescisão indireta / acidente de trabalho / horas extras / vínculo / outro)
-- Acidente ou doença: (CAT, afastamento, INSS), se houver
-- Processo anterior contra essa empresa:
+- Município/UF:
+- Atividade: (o que planta ou cria)
+- Área: (hectares; própria, arrendada ou parceria; pequena propriedade familiar?)
+- Banco(s) e linha(s): (custeio, investimento, Pronaf, Pronamp, Funcafé, CPR, outro)
+- Valor da dívida e vencimento:
+- O que aconteceu: (seca, geada, chuva, praga, queda de preço) e se tem laudo, Proagro, seguro
+  ou comunicação ao banco
+- Pedido de prorrogação: (fez? quando? por escrito? o que o banco respondeu?)
+- Situação da cobrança: (em dia / atrasada / negativado / execução / leilão marcado em ... /
+  busca e apreensão)
+- Garantias: (hipoteca, alienação fiduciária, penhor de safra, máquinas ou gado, aval)
+- Urgência: (URGENTE, LIGAR JÁ / normal) e por quê
 - Temperatura do lead: (frio / morno / quente) e por quê
 
 2) PONTOS FORTES DO CASO
@@ -265,13 +328,16 @@ BRIEFING DE FECHAMENTO, {{nome}}
 
 3) ROTEIRO DA CONVERSA DE FECHAMENTO (siga na ordem)
 1. Abertura e conexão
-2. Confirmar a história
-3. Nomear a dor, com respeito
-4. Apresentar o escritório e a {ADVOGADA}
-5. Explicar o caminho trabalhista, passo a passo, de forma didática
+2. Confirmar a história e as datas (vencimento, citação, leilão)
+3. Nomear a preocupação, com respeito
+4. Apresentar o escritório e {ADVOGADA}
+5. Explicar o caminho, passo a passo, de forma simples (análise dos contratos, pedido ao banco ou
+   defesa na Justiça, conforme o caso)
 6. Conduzir para a assinatura do contrato e da procuração
-7. Próximos passos: documentos (RG ou CNH, carteira de trabalho, comprovante de endereço,
-   holerites, provas que tiver)
+7. Próximos passos: documentos para a análise inicial (RG e CPF, comprovante de endereço,
+   cédulas e contratos do banco, extrato ou planilha da dívida, cartas e notificações do banco,
+   matrícula do imóvel dado em garantia, laudo ou comunicação de perda, citação, mandado ou
+   edital de leilão se houver)
 
 4) OBJEÇÕES PROVÁVEIS + COMO RESPONDER
 - (2 a 3, com resposta pronta)
@@ -311,7 +377,7 @@ def gerar_briefing_fechamento(historico, nome="o cliente", dados_calculadora=Non
     hoje = _dt.date.today().strftime('%d/%m/%Y')
     extra = ''
     if dados_calculadora:
-        extra = ("\n\nDADOS CONFIRMADOS PELO FORMULÁRIO (use estes valores exatos na seção 1):\n"
+        extra = ("\n\nDADOS CONFIRMADOS PELA CALCULADORA/FORMULÁRIO (use estes valores exatos na seção 1):\n"
                  + _resumo_formulario(dados_calculadora) + "\n")
     conteudo = (f"DATA DE HOJE: {hoje}." + extra + "\n\n"
                 f"Aqui está a conversa entre a {NOME} (atendimento) e o lead. NÃO responda a conversa: "

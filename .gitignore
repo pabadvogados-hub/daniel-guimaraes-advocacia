@@ -90,3 +90,6 @@ SISTEMA/backend/app/juridico/modelos/*.docx
 
 # saida de pecas geradas em teste local
 SISTEMA/backend/pecas_geradas/
+
+# exemplos ficticios do AGRO (o *.json acima os ignorava)
+!AGRO/exemplos/*.json

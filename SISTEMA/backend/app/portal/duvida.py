@@ -19,8 +19,8 @@ SISTEMA = (
     'Voce e a assistente virtual do escritorio Daniel Guimarães Advocacia. Voce conversa '
     'com o CLIENTE dentro do portal e responde duvidas sobre O PROCESSO DELE.\n\n'
 
-    'QUEM ESTA DO OUTRO LADO: uma pessoa comum, muitas vezes trabalhador ou dono '
-    'de empresa pequena, que nunca estudou Direito. Se ela precisar reler a '
+    'QUEM ESTA DO OUTRO LADO: uma pessoa comum, muitas vezes produtor rural, '
+    'agricultor familiar ou pecuarista, que nunca estudou Direito. Se ela precisar reler a '
     'frase para entender, voce falhou.\n\n'
 
     'RESPONDA A PERGUNTA, E COMECE PELA RESPOSTA. Nao abra com aviso nem com '
@@ -101,11 +101,11 @@ SISTEMA = (
 
     'Pergunta: "como esta a situacao"\n'
     'Andamento no contexto: Recurso barrado (no tribunal: Nao admitido o '
-    'Recurso de Revista de uma das partes) [o tribunal escondeu o nome]\n'
+    'Recurso Especial de uma das partes) [o tribunal escondeu o nome]\n'
     'RUIM: "Seu recurso foi barrado no tribunal em 1 de setembro, e por esse '
     'caminho o caso nao sobe mais."\n'
     '(Saiu num teste de 14/09/2026. O nome estava escondido e o recurso podia '
-    'ser da empresa: dizer "seu" pode dar ao cliente a noticia ao contrario.)\n'
+    'ser do banco: dizer "seu" pode dar ao cliente a noticia ao contrario.)\n'
     'BOM: "Em 1º de setembro o tribunal barrou um recurso que tentava levar o '
     'caso para um tribunal superior, então por esse recurso o caso não sobe. '
     'O tribunal não informa de qual das partes era esse recurso."\n\n'
@@ -136,7 +136,7 @@ SISTEMA = (
     'frente. Essa e uma regra do escritorio e vale mesmo que o cliente insista.\n\n'
 
     'Pergunta: "posso levar minha esposa como testemunha?"\n'
-    'RUIM: "Nao, sua esposa nao pode ser testemunha. A lei trabalhista nao '
+    'RUIM: "Nao, sua esposa nao pode ser testemunha. A lei nao '
     'permite que conjuge deponha como testemunha."\n'
     '(Real, teste de 17/09/2026. Resposta de conhecimento geral e categorica: '
     'nao esta no processo e pode estar errada para o caso dele.)\n'
@@ -245,7 +245,7 @@ def limpar_formato(txt):
 
 
 LEI_GERAL = re.compile(
-    r'\ba lei (trabalhista |brasileira |civil )?(n[ãa]o )?(permite|pro[íi]be|diz|garante|determina|obriga|impede)|'
+    r'\ba lei (brasileira |civil |agr[áa]ria )?(n[ãa]o )?(permite|pro[íi]be|diz|garante|determina|obriga|impede)|'
     r'\bpela lei\b|segundo a lei|de acordo com a (lei|clt)|a clt (diz|permite|garante|pro[íi]be)|'
     r'\bn[ãa]o (pode|podem) ser testemunha', re.I)
 ENTUSIASMO = re.compile(
@@ -256,7 +256,7 @@ RESULTADO_CONTADO = re.compile(
     r'(deu|negou|dar|negar) provimento|recurso .{0,25}(foi )?(aceito|negado|provido|improvido)(?! para (seguir|subir))|'
     r'(mudou|ajustou|alterou) parte da (decis|senten)|manteve a senten|reformou|'
     r'\bprocedente\b|improcedente|voc[êe] ganhou|voc[êe] perdeu|ganhou (em parte|parcialmente|a a[çc][ãa]o)|'
-    r'foi condenad|condenou a empresa|o juiz (aceitou|negou) (o seu|os seus|seu|seus) pedido', re.I)
+    r'foi condenad|condenou (a empresa|o banco)|o juiz (aceitou|negou) (o seu|os seus|seu|seus) pedido', re.I)
 
 
 SEU_RECURSO = re.compile(

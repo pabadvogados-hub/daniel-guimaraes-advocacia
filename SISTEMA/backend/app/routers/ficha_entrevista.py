@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
-"""Aba ENTREVISTA da ficha do cliente (Advogada, 02/09/2026).
+"""Aba ENTREVISTA da ficha do cliente (produtor rural, defesa contra bancos).
 
 O modal "Ficha do cliente" do chat ao vivo tem 7 campos genericos e um campo de
-Anotacoes. A entrevista do reclamante nao cabe ali: sao ~60 perguntas. Esta
+Anotacoes. A entrevista do produtor rural nao cabe ali: sao ~50 perguntas (producao,
+credito e banco, garantias, perda de safra, pedido ao banco, cobranca). Esta
 aba poe cada pergunta em um campo de verdade, para o juridico depois EXTRAIR
 resposta por resposta em vez de garimpar texto solto.
 
@@ -52,137 +53,104 @@ def _c(cid, label, tipo='texto', obrig=False, opcoes=None):
 # --- O esquema. Cada bloco vira um titulo; cada campo, um input. -------------
 # tipo: 'texto' (uma linha) | 'area' (varias linhas) | 'opcao' (select)
 BLOCOS = [
-    # Bloco do CLIENTE (Advogada, 04/09/2026): o endereco preenchido AQUI vale como
-    # comprovante para a contratacao avancar (o vigia le o campo
-    # 'endereco_cliente'; o arquivo do comprovante e cobrado depois, na
-    # organizacao de documentos). Fluxo dela: fechou na ligacao -> pede so a
-    # CNH -> preenche o endereco na entrevista -> contrato sai.
-    {'id': 'cliente', 'titulo': 'O cliente',
+    # Bloco do CLIENTE: o endereco preenchido AQUI vale como comprovante para a contratacao
+    # avancar (o vigia le o campo 'endereco_cliente'; o arquivo do comprovante e cobrado depois,
+    # na organizacao de documentos). Fluxo: fechou na ligacao -> pede o documento -> preenche o
+    # endereco na entrevista -> contrato sai.
+    {'id': 'cliente', 'titulo': 'O produtor',
      'ajuda': 'Endereco completo aqui libera o contrato sem esperar o arquivo do '
-              'comprovante. Anote como ele falar: rua, numero, bairro, cidade e CEP.',
+              'comprovante. Anote como ele falar: rua ou estrada, numero ou km, bairro ou '
+              'comunidade, cidade e CEP. Casado: o conjuge assina junto quando ha garantia real.',
      'campos': [
-         _c('endereco_cliente', 'Endereco completo do cliente (rua, numero, bairro, cidade e CEP)',
+         _c('endereco_cliente', 'Endereco completo do cliente (rua/estrada, numero/km, bairro, cidade e CEP)',
             'area', True),
+         _c('estado_civil_regime', 'Estado civil e regime de bens', obrig=True),
+         _c('conjuge', 'Nome e CPF do conjuge (se casado ou uniao estavel)'),
+         _c('pessoa_juridica', 'Produz como pessoa fisica ou tem empresa rural (CNPJ)?'),
      ]},
-    {'id': 'empresa', 'titulo': 'A empresa: a porteira da convencao coletiva',
-     'ajuda': 'A convencao sai da base territorial da SEDE. Jornada-base errada contamina '
-              'o calculo inteiro. Confirme pelo CNPJ na hora, nao pela memoria dele.',
+    {'id': 'producao', 'titulo': 'A producao',
+     'ajuda': 'O tamanho e o tipo de producao mudam a linha de credito (Pronaf, Pronamp, '
+              'demais) e a defesa da terra. Pergunte em hectares; se ele falar em alqueire, anote '
+              'como falou.',
      'campos': [
-         _c('razao_social', 'Razao social completa', obrig=True),
-         _c('cnpj', 'CNPJ', obrig=True),
-         _c('como_chama', 'Como ele chama a firma'),
-         _c('endereco_sede', 'Endereco da SEDE, de onde o caminhao sai', 'area', True),
-         _c('grupo_economico', 'Outras empresas do mesmo dono ou do mesmo galpao'),
-         _c('porte_frota', 'Quantos caminhoes e quantos motoristas tem a firma'),
-         _c('agenciador', 'Trabalha para agenciador ou embarcador? Descontam por isso?'),
-         _c('tipo_carga_geral', 'Transporta o que, no geral'),
+         _c('atividade', 'O que planta ou cria (cultura, rebanho, leite...)', obrig=True),
+         _c('area_total', 'Area total (ha) e quanto e plantado/ocupado', obrig=True),
+         _c('posse_terra', 'Terra propria, arrendada ou em parceria', 'opcao', True,
+            ['', 'Propria', 'Arrendada', 'Parceria', 'Mista']),
+         _c('modulos_fiscais', 'Pequena propriedade (ate 4 modulos fiscais) tocada pela familia?', 'opcao', True,
+            ['', 'Sim, familia trabalha nela', 'Nao', 'Nao sabe']),
+         _c('imovel_matricula', 'Nome do imovel, municipio e numero da matricula'),
+         _c('mora_no_imovel', 'Mora no imovel? E a unica propriedade da familia?'),
+         _c('dap_caf', 'Tem DAP ou CAF (agricultura familiar)?', 'opcao', False,
+            ['', 'Sim', 'Nao', 'Vencida', 'Nao sabe']),
+         _c('produtividade', 'Produtividade normal x produtividade da safra ruim (sc/ha, @, litros)', 'area'),
      ]},
-    {'id': 'contrato', 'titulo': 'O contrato', 'campos': [
-        _c('registrado_desde', 'E registrado? Desde quando', obrig=True),
-        _c('antes_registro', 'Trabalhou antes de assinarem a carteira'),
-        _c('contrato_ativo', 'O contrato ainda esta ativo', 'opcao', True,
-           ['', 'Sim, ainda esta la', 'Ja saiu']),
-        _c('como_saiu', 'Se saiu, como', 'opcao', True,
-           ['', 'Dispensa', 'Pediu a conta', 'Acordo', 'Justa causa']),
-        _c('data_saida', 'Data da saida'),
-        _c('motivo_saida_literal', 'Se pediu a conta, por que? Nao aguentava mais o que (ANOTAR LITERAL)', 'area'),
-        _c('pagamento_rescisao', 'Em que dia pagaram a rescisao? Quantos dias depois', obrig=True),
-        _c('funcao_carteira', 'Funcao anotada na carteira', obrig=True),
-        _c('funcao_real', 'O que ele fazia de verdade, no dia a dia', 'area', True),
-        _c('baixa_carteira', 'Deram baixa na carteira fisica'),
+    {'id': 'credito', 'titulo': 'O credito e o banco', 'campos': [
+        _c('razao_social', 'Banco ou cooperativa credora (razao social completa)', obrig=True),
+        _c('cnpj', 'CNPJ do banco/cooperativa'),
+        _c('agencia_gerente', 'Agencia, cidade e nome do gerente'),
+        _c('linhas', 'Quais operacoes: custeio, investimento, Pronaf, Pronamp, Funcafe, CPR, CCB, '
+                     'capital de giro (numero e data de cada cedula)', 'area', True),
+        _c('valor_contratado', 'Valor contratado em cada operacao (R$)', 'area', True),
+        _c('saldo_devedor', 'Saldo devedor hoje, segundo o banco (R$)', obrig=True),
+        _c('vencimentos', 'Vencimentos: parcela vencida e proximas (datas)', 'area', True),
+        _c('taxa_encargos', 'Taxa de juros e encargos que o banco cobra (e se mudou)'),
+        _c('venda_casada', 'Teve venda casada? Seguro, capitalizacao, consorcio, previdencia'),
+        _c('renegociacoes', 'Ja renegociou ou repactuou antes? Quantas vezes e o que mudou', 'area'),
+        _c('outros_bancos', 'Deve para outros bancos, cooperativas, tradings ou revendas? Quanto'),
     ]},
-    {'id': 'remuneracao', 'titulo': 'Remuneracao (todo valor leva R$)', 'campos': [
-        _c('salario_carteira', 'Registrado na carteira (R$)', obrig=True),
-        _c('salario_real', 'Quanto tira por mes de verdade, na media (R$)', obrig=True),
-        _c('forma_ganho', 'Ganha fixo, comissao, por viagem ou por quilometragem'),
-        _c('por_fora_valor', 'Tem parte que cai por fora? Quanto (R$)', obrig=True),
-        _c('por_fora_forma', 'Como cai o por fora', 'opcao', True,
-           ['', 'PIX', 'Cheque', 'Envelope', 'Dinheiro', 'Outro']),
-        _c('recibo_produtividade', 'Tem RECIBO desse pagamento (por tonelada, viagem, entrega)'),
-        _c('diaria', 'Diaria (R$) e o que ela cobre'),
-        _c('pernoite_valor', 'Pernoite separado da diaria (R$)', obrig=True),
-        _c('vale_refeicao', 'Vale-refeicao (R$)'),
-        _c('premio_bonus', 'Premio, bonus, ajuda de custo (R$)'),
-        _c('base_13_ferias', '13o e ferias caem sobre a carteira ou sobre o real'),
-        _c('descontos', 'Descontam algo? Combustivel, pedagio, avaria, multa, pousada (R$)', 'area', True),
-    ]},
-    {'id': 'jornada', 'titulo': 'Jornada', 'campos': [
-        _c('horario_comum', 'Que horas comeca e termina num dia comum', obrig=True),
-        _c('semana_descrita', 'Descreva uma semana sua, do comeco ao fim (deixe ele falar)', 'area'),
-        _c('almoco', 'Consegue parar 1 hora pra almocar', 'opcao', False,
-           ['', 'Sim', 'As vezes', 'Nao']),
-        _c('interjornada', 'Entre parar a noite e sair de manha, da 11 horas? Quantas', obrig=True),
-        _c('pausa_30min', 'Faz a pausa de 30 min a cada 5h30 rodando'),
-        _c('domingo_feriado', 'Trabalha domingo e feriado? Recebe em dobro ou folga'),
-        _c('setimo_dia', 'Ja trabalhou mais de 6 dias seguidos sem folga'),
-        _c('noturno', 'Roda entre 22h e 5h? Quantas noites por semana'),
-        _c('hora_extra_paga', 'Recebe hora extra? O holerite bate com o que faz'),
-        _c('art_62_externo', 'A empresa alega que ele e EXTERNO, sem controle de horario'),
-    ]},
-    {'id': 'espera', 'titulo': 'Tempo de espera', 'campos': [
-        _c('tempo_espera', 'Quanto tempo espera pra carregar e pra descarregar', obrig=True),
-        _c('pode_sair', 'Nesse tempo pode ir embora ou tem que ficar no patio'),
-        _c('dias_parado', 'Ja ficou dias parado esperando carga? Quantos'),
-        _c('recebe_espera', 'Recebe alguma coisa por esse tempo (R$)'),
-        _c('episodio_datado', 'Episodio com data (ex.: cheguei meia-noite, descarregaram no dia seguinte)', 'area'),
-    ]},
-    {'id': 'pernoite', 'titulo': 'Onde ele dorme', 'campos': [
-        _c('onde_dorme', 'Onde dorme', 'opcao', True,
-           ['', 'Cabine leito', 'Cabine simples', 'BAU', 'Carro', 'Pousada', 'Outro']),
-        _c('estrutura_cabine', 'O que tem dentro (cama, colchao, coberta)'),
-        _c('posto_indicado', 'A empresa indica o posto? Qual a estrutura'),
-        _c('banheiro_comida', 'Tem banheiro pra banho, comida e seguranca no local'),
-        _c('paga_pernoite', 'A empresa paga o pernoite mesmo dormindo no caminhao (R$)'),
-        _c('alojamento_feminino', 'SE MULHER: como era o alojamento? Tinha banheiro feminino separado', 'area'),
-    ]},
-    {'id': 'controle', 'titulo': 'Controle de jornada: define o arquetipo', 'campos': [
-        _c('como_marca', 'Como marca a jornada', 'opcao', True,
-           ['', 'Diario de bordo', 'Papeleta', 'Aplicativo', 'Rastreador', 'Nada']),
-        _c('sistema_rastreio', 'Nome do sistema de rastreio', obrig=True),
-        _c('assina_ponto', 'Assina folha de ponto? Todo dia ou todo mes'),
-        _c('folha_bate', 'A folha bate com o que ele faz de verdade', obrig=True),
-        _c('mandaram_escrever', 'Ja mandaram escrever horario que nao era o real (ANOTAR LITERAL)', 'area'),
-        _c('arquetipo', 'ARQUETIPO', 'opcao', True,
-           ['', 'A: tem controle, mas nao bate. EXIGE TESTEMUNHA',
-            'B: nao tem controle idoneo, so rastreador']),
-    ]},
-    {'id': 'provas', 'titulo': 'Provas e testemunhas',
-     'ajuda': 'ANOTE AS NEGATIVAS. Se ele disser que NAO tem ou que NUNCA aconteceu, escreva. '
-              'E o que impede a cobranca automatica de pedir o que nao existe.',
+    {'id': 'garantias', 'titulo': 'Garantias',
+     'ajuda': 'A garantia define o risco: hipoteca e alienacao fiduciaria levam a leilao; penhor '
+              'e alienacao de maquina levam a busca e apreensao.',
      'campos': [
-         _c('testemunha_1', 'Testemunha 1: nome, telefone, e se ja saiu da firma', 'area', True),
-         _c('testemunha_2', 'Testemunha 2: nome, telefone, e se ja saiu da firma', 'area'),
-         _c('whatsapp_empresa', 'Tem conversa de WhatsApp com logistica, RH ou gerente'),
-         _c('fotos', 'Tem foto ou video da cabine, do patio, de como dormia'),
-         _c('documentos', 'Tem holerite, TRCT, extrato de FGTS, contrato, ordem de servico'),
-         _c('extrato_bancario', 'Tem extrato bancario do periodo todo'),
-         _c('recibos_por_fora', 'Tem os recibos do pagamento por fora? Quantos'),
-         _c('negativas', 'NEGATIVAS expressas (nunca foi assaltado, nao tem holerite, etc.)', 'area', True),
+         _c('tipo_garantia', 'Garantia dada', 'opcao', True,
+            ['', 'Hipoteca', 'Alienacao fiduciaria do imovel', 'Penhor de safra', 'Penhor de maquinas',
+             'Penhor de gado', 'Alienacao fiduciaria de maquina/veiculo', 'Aval', 'Mais de uma']),
+         _c('bens_garantia', 'Quais bens estao em garantia (imovel, maquinas, gado, safra)', 'area', True),
+         _c('avalistas', 'Avalistas ou fiadores (nome e parentesco)'),
      ]},
-    {'id': 'risco', 'titulo': 'Situacao atual, risco e advogado anterior', 'campos': [
-        _c('pretende_sair', 'Pretende sair? Ja tem outra proposta'),
-        _c('medo_retaliacao', 'Tem medo de retaliacao? Do que exatamente'),
-        _c('ciencia_contrato_vigor', 'SE O CONTRATO ESTA EM VIGOR: ciencia registrada por escrito em', 'texto'),
+    {'id': 'perda', 'titulo': 'O que aconteceu com a safra',
+     'ajuda': 'Prorrogacao depende de prova da frustracao ou da dificuldade de venda. ANOTE O QUE '
+              'EXISTE E O QUE NAO EXISTE.',
+     'campos': [
+         _c('evento', 'O que aconteceu', 'opcao', True,
+            ['', 'Seca/estiagem', 'Geada', 'Excesso de chuva', 'Granizo', 'Praga/doenca',
+             'Queda de preco', 'Doenca no rebanho', 'Outro', 'Nada (so a parcela nao fecha)']),
+         _c('evento_detalhe', 'Quando foi e quanto perdeu (% da producao, sacas, R$)', 'area', True),
+         _c('laudo', 'Tem laudo agronomico ou tecnico da perda? De quem', obrig=True),
+         _c('proagro_seguro', 'Acionou Proagro ou seguro rural? Resultado'),
+         _c('decreto_emergencia', 'O municipio decretou emergencia ou calamidade? Quando'),
+         _c('notas_venda', 'Tem notas fiscais de produtor da safra boa e da safra ruim?'),
+     ]},
+    {'id': 'banco', 'titulo': 'Pedido ao banco',
+     'ajuda': 'Pedido de prorrogacao feito ANTES do vencimento e POR ESCRITO pesa muito. '
+              'Anote a resposta do banco literal.',
+     'campos': [
+         _c('pediu_prorrogacao', 'Pediu prorrogacao ou alongamento ao banco?', 'opcao', True,
+            ['', 'Sim, por escrito', 'Sim, so de boca', 'Nao']),
+         _c('data_pedido', 'Quando pediu (antes ou depois do vencimento)'),
+         _c('resposta_banco', 'O que o banco respondeu (ANOTAR LITERAL)', 'area', True),
+         _c('exigencias_banco', 'O banco exigiu algo para renegociar (entrada, nova garantia, seguro)'),
+     ]},
+    {'id': 'cobranca', 'titulo': 'Situacao da cobranca: define a urgencia', 'campos': [
+        _c('situacao', 'Situacao hoje', 'opcao', True,
+           ['', 'Em dia / a vencer', 'Vencida sem cobranca judicial', 'Negativado', 'Execucao na Justica',
+            'Leilao marcado', 'Busca e apreensao', 'Consolidacao da propriedade (alienacao fiduciaria)']),
+        _c('data_urgente', 'Data do leilao, da citacao ou do mandado', obrig=True),
+        _c('processo_numero', 'Numero do processo (se houver)'),
+        _c('penhora_bloqueio', 'Teve penhora ou bloqueio de conta? Quanto'),
+        _c('notificacoes', 'Recebeu notificacao ou carta do banco? Quando', 'area'),
         _c('advogado_anterior', 'Ja teve advogado nesse caso', obrig=True),
-        _c('acao_anterior', 'Chegou a entrar com acao? Numero'),
     ]},
-    {'id': 'valor_causa', 'titulo': 'O que aumenta o valor da causa',
-     'ajuda': 'Pode vir num segundo contato, em ate 48h, desde que o resto esteja fechado.',
+    {'id': 'documentos', 'titulo': 'Documentos que ele tem',
+     'ajuda': 'ANOTE AS NEGATIVAS. Se ele disser que NAO tem, escreva. E o que impede a cobranca '
+              'automatica de pedir o que nao existe.',
      'campos': [
-         _c('carga_descarga', 'Carrega e descarrega sozinho? Peso das pecas (kg)'),
-         _c('epi', 'Recebeu EPI? Roupa termica, luva, bota'),
-         _c('paga_ajudante', 'Paga ajudante do proprio bolso (R$)'),
-         _c('camera_cabine', 'Tem CAMERA dentro da cabine? Aponta pra onde'),
-         _c('km_pegar_caminhao', 'Quanto anda so pra pegar o caminhao (km / min)'),
-         _c('produto_perigoso', 'Que carga puxa? E produto perigoso'),
-         _c('frigorifico', 'Bau ou carreta frigorifica? Entra na camara fria'),
-         _c('assalto', 'Ja foi assaltado ou sequestrado? Como foi', 'area'),
-         _c('empresa_suporte', 'A empresa deu suporte? (ANOTAR A RESPOSTA LITERAL DELA)', 'area'),
-         _c('bloqueio_gr', 'Ficou bloqueado no gerenciamento de risco? Quanto tempo'),
-         _c('acidente_cat', 'Ja se acidentou? Teve CAT? Ficou afastado'),
-         _c('tempo_fora_casa', 'Quanto tempo fica sem ir em casa'),
-         _c('dano_existencial', 'Perdeu aniversario, formatura, casamento, velorio (ANOTAR LITERAL)', 'area'),
-         _c('relacao_casa', 'Como esta a relacao em casa por causa do tempo fora', 'area'),
+         _c('tem_cedulas', 'Tem as cedulas/contratos do banco (copias)?'),
+         _c('tem_extratos', 'Tem extratos ou planilha de evolucao da divida?'),
+         _c('tem_matricula_ccir', 'Tem matricula do imovel, CCIR, ITR e CAR?'),
+         _c('tem_projeto', 'Tem o orcamento/projeto tecnico do financiamento?'),
+         _c('negativas', 'NEGATIVAS expressas (nao tem laudo, nao pediu por escrito, etc.)', 'area', True),
      ]},
 ]
 

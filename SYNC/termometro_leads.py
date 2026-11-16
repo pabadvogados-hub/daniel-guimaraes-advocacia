@@ -1,19 +1,24 @@
 # -*- coding: utf-8 -*-
 """
-Termometro de leads trabalhistas (quadro "Reclamantes", id 10) — classificador.
+Termometro de leads de PRODUTOR RURAL (quadro "Produtores Rurais", id 10) — classificador.
 
 Le as conversas do Sistema Guimarães Advocacia (sqlite local na VPS), classifica cada lead com
-Claude Haiku (mesma chave da SDR de reclamantes) e grava na tabela lead_termometro:
+Claude Haiku (mesma chave da SDR) e grava na tabela lead_termometro:
 
-  temperatura: quentissimo (violacao + ja saiu da empresa, ou caso urgente na empresa:
-                            rescisao indireta, acidente/doenca do trabalho)
-               quente      (violacao + ainda trabalhando)
-               morno       (indicio de caso, falta informacao)
-               frio        (sem indicio / prescricao bienal provavel)
-               sem_caso    (assunto nao trabalhista)
+  temperatura: quentissimo (divida rural com problema concreto E urgencia: leilao marcado,
+                            citacao em execucao, busca e apreensao, penhora/bloqueio, ou parcela
+                            vencida/vencendo com perda de safra)
+               quente      (divida rural com problema concreto, sem ato judicial ainda)
+               morno       (indicio de caso, falta informacao: banco, valor, situacao)
+               frio        (sem indicio de caso / so clicou no anuncio)
+               sem_caso    (nao e produtor rural nem divida rural)
                sem_resposta(lead nunca mandou texto — classificado SEM gastar API)
   situacao:    saiu | trabalhando | nao_informado
-  violacoes:   JSON (horas extras, intervalo, acumulo de funcao, acidente, ...)
+               (CODIGOS HERDADOS DA BASE, mantidos porque o painel comercial e os fluxos leem
+                esses valores: "saiu" = divida JA EM COBRANCA (vencida, negativada, execucao,
+                leilao, busca e apreensao); "trabalhando" = divida EM DIA ou a vencer)
+  violacoes:   JSON com os PONTOS DO CASO (perda de safra, pedido de prorrogacao negado,
+               leilao marcado, encargos abusivos, venda casada, pequena propriedade...)
   resumo:      1 linha pronta pro advogado ligar
 
 INCREMENTAL: so reclassifica conversa que tem mensagem nova desde a ultima
@@ -23,7 +28,7 @@ depois, so o delta do dia.
 Efeitos no board (salvo com --dry):
   - tag do card ganha o marcador 🔥/🟡/⚪ (preserva o texto da tag existente);
   - lead 🔥 que esta numa coluna de entrada sobe para "Lead Quente" (fila prioritaria);
-  - reclamante com 12+ contatos nossos SEM resposta e inscrito no fluxo
+  - lead com 12+ contatos nossos SEM resposta e inscrito no fluxo
     'reaquecimento' (roda mesmo sem creditos de API; o fluxo para se o lead responder).
 
 USO (VPS):
@@ -50,14 +55,14 @@ DB = os.getenv("SISTEMA_DB", "/opt/escritorio/SISTEMA/backend/sistema_esc.db")
 MODELO = "claude-haiku-4-5"
 PIPELINE_ESC_LEADS = 10
 ETAPA_CAIXA = "Caixa de Entrada"
-ETAPAS_ENTRADA = ("Caixa de Entrada", "Campanha Fast-food", "Campanha Supermercado",
-                  "Campanha Acidente de Trabalho", "Campanha Geral")
+ETAPAS_ENTRADA = ("Caixa de Entrada", "Campanha Prorrogação", "Campanha Execução e Leilão",
+                  "Campanha Busca e Apreensão", "Campanha Geral")
 ETAPA_LEAD_QUENTE = "Lead Quente"      # fila prioritaria dos 🔥
 ETAPAS_FECHADAS = ("Ganho", "Perdido", "Perdido - Sem resposta", "Perdido - Sem interesse",
                    "Contrato / Assinatura", "Lead Desqualificado")
 ETAPAS_SEM_MOVER = ("Lead Qualificado", "Contatado", "Pré fechamento [fluxo aquecimento]")
 ETAPA_DESQUALIFICADO = "Lead Desqualificado"
-# Trabalhador nao e desqualificado: quem ja tem advogado vai para Perdido - Sem interesse,
+# Produtor nao e desqualificado: quem ja tem advogado vai para Perdido - Sem interesse,
 # quem nao quer agora entra no reaquecimento anual e continua no funil.
 ETAPA_PERDIDO_SEM_INTERESSE = "Perdido - Sem interesse"
 FLUXO_BIMESTRAL = "reaquecimento_bimestral"   # passa a ser anual: 4, 8 e 12 meses
@@ -79,27 +84,32 @@ create table if not exists lead_termometro (
 )
 """
 
-PROMPT = """Você é o classificador de leads trabalhistas do Daniel Guimarães Advocacia (defesa do trabalhador, reclamante).
+PROMPT = """Você é o classificador de leads do Daniel Guimarães Advocacia (defesa do PRODUTOR RURAL contra bancos e cooperativas de crédito).
 Você recebe a conversa de WhatsApp de um lead com o escritório e devolve APENAS um JSON válido, sem markdown, no formato:
 {"temperatura":"quentissimo|quente|morno|frio|sem_caso","situacao":"saiu|trabalhando|nao_informado","comercial":"segue|ja_tem_advogado|nao_quer|adiar","violacoes":["..."],"resumo":"..."}
 
-REGRAS DE TEMPERATURA:
-- "quentissimo": relata violação de direito trabalhista E já saiu da empresa (demitido, pediu conta, contrato encerrado) há MENOS de 2 anos; OU ainda trabalha mas relata situação grave e atual (salário atrasado, FGTS sem depósito, assédio, acidente ou doença do trabalho, afastamento): caso de rescisão indireta ou acidentário.
-- "quente": relata violação de direito trabalhista E ainda trabalha na empresa, sem urgência atual.
-- "morno": há indício de caso trabalhista, mas falta informação essencial (não disse se ainda trabalha, ou a violação está vaga).
-- "frio": sem indício de caso (conversa morreu no começo, só cumprimentos, curiosidade) OU saiu da empresa há mais de 2 anos (anote "possível prescrição bienal" no resumo).
-- "sem_caso": assunto não trabalhista (fornecedor, parceria, mentoria, assunto pessoal, engano, spam).
+CAMPO "situacao" (os códigos são fixos, use exatamente estes valores):
+- "saiu" = a dívida JÁ ESTÁ EM COBRANÇA: parcela vencida, nome negativado, execução na Justiça, leilão marcado, busca e apreensão, penhora ou bloqueio de conta, consolidação da propriedade.
+- "trabalhando" = a dívida está EM DIA ou ainda vai vencer (o produtor quer se antecipar, prorrogar ou renegociar antes do vencimento).
+- "nao_informado" = não deu para saber.
 
-VIOLAÇÕES típicas (use estes nomes quando couber; pode acrescentar outras):
-horas extras, banco de horas irregular, intervalo, trabalho em domingo e feriado, adicional noturno, acúmulo de função, desvio de função, insalubridade, periculosidade, assédio moral, acidente de trabalho, doença ocupacional, salário atrasado, FGTS não depositado, pagamento por fora, descontos indevidos, quebra de caixa, sem registro, verbas rescisórias, estabilidade (gestante, acidentária).
+REGRAS DE TEMPERATURA:
+- "quentissimo": é produtor rural com dívida de crédito rural E há URGÊNCIA: leilão marcado, citação ou mandado em execução, busca e apreensão de máquina ou veículo, penhora ou bloqueio de conta, consolidação da propriedade; OU parcela vencida ou vencendo nos próximos 60 dias com perda de safra (seca, geada, chuva, praga) ou queda de preço relatada.
+- "quente": é produtor rural com problema concreto na dívida (não consegue pagar, banco negou prorrogação, encargos altos, nome negativado), sem ato judicial ainda.
+- "morno": há indício de caso de dívida rural, mas falta informação essencial (banco, valor, se venceu, o que aconteceu).
+- "frio": sem indício de caso (conversa morreu no começo, só cumprimentos, curiosidade) OU dívida já quitada ou renegociada sem problema.
+- "sem_caso": não é produtor rural nem dívida rural (fornecedor, parceria, assunto pessoal, trabalhista, consumidor urbano, engano, spam).
+
+PONTOS DO CASO (campo "violacoes"; use estes nomes quando couber; pode acrescentar outros):
+perda de safra (seca, geada, excesso de chuva, granizo, praga), queda de preço, doença no rebanho, laudo ou Proagro ou seguro rural, decreto de emergência no município, pedido de prorrogação feito, prorrogação negada pelo banco, parcela vencida, nome negativado, execução de cédula, leilão marcado, busca e apreensão, penhora ou bloqueio, pequena propriedade familiar, encargos acima do contratado, venda casada (seguro, capitalização, consórcio), renegociações sucessivas, Pronaf, Pronamp, Funcafé, CPR.
 
 RESUMO: 1 linha (máx. 110 caracteres), telegráfica, o que o advogado precisa saber para ligar.
-Ex.: "Saiu em jun/26 do mercado XYZ; HE + intervalo + acúmulo caixa/repositor". Se a época da saída aparecer na conversa, inclua.
+Ex.: "Soja 300ha, Banco X custeio R$850mil venceu mai/26; seca c/ laudo; leilão 20/12". Se houver data de leilão ou citação, inclua.
 
 CAMPO "comercial" — a intenção do lead decide o destino dele:
 - "ja_tem_advogado": ele disse que JÁ TEM advogado ou ação em andamento sobre ESTE caso. Sai de pauta.
-- "nao_quer": recusou de vez (não quer processar, pediu para parar de mandar mensagem, sem interesse definitivo).
-- "adiar": tem interesse mas NÃO AGORA (vai esperar sair da empresa, resolver depois, "mais pra frente").
+- "nao_quer": recusou de vez (não quer ajuda, pediu para parar de mandar mensagem, sem interesse definitivo).
+- "adiar": tem interesse mas NÃO AGORA (vai tentar negociar sozinho primeiro, depois da colheita, "mais pra frente").
 - "segue": nenhum dos anteriores (é o padrão; na dúvida, "segue").
 
 CONTEXTO DO CARD: junto da conversa você recebe a ETAPA no CRM e as NOTAS que o time escreveu no card.
@@ -107,11 +117,12 @@ Use-as para classificar — se a nota diz que já foi contatado, que tem advogad
 tanto quanto a fala do lead. Não contradiga o que o time registrou.
 
 ATENÇÃO — CTA DO ANÚNCIO: a primeira mensagem do lead costuma ser o botão pré-preenchido da campanha
-(ex.: "Quero saber meus direitos trabalhistas", "Trabalhei em supermercado", "Sofri um acidente de trabalho",
-"Posso ter mais informações sobre isso?").
-Isso é frase pronta do anúncio, NÃO é relato do caso — não conta como violação nem como situação de emprego.
+(ex.: "Quero prorrogar minha dívida", "Quero falar sobre minha dívida rural", "O banco quer tomar minha máquina",
+"Posso ter mais informações sobre isso?") ou a mensagem pronta da calculadora de crédito rural.
+Isso é frase pronta do anúncio, NÃO é relato do caso — não conta como ponto do caso nem como situação da dívida.
 Se a conversa tiver só isso (ou quase só isso), classifique "frio" com resumo tipo "Só clicou no anúncio, não contou o caso".
-Violações e situação só valem quando o lead relata com as palavras dele.
+Exceção: os números da simulação da calculadora (valor, taxa, parcelas) valem como dado do caso; ainda assim, sem relato, no máximo "morno".
+Pontos do caso e situação só valem quando o lead relata com as palavras dele.
 Baseie-se SÓ no que está na conversa. Não invente."""
 
 
@@ -204,7 +215,7 @@ def main():
         "select id, contato_nome, contato_telefone, etapa, tag, coalesce(notas,'') "
         "from wa_conversas "
         "where pipeline_id=? and upper(trim(coalesce(tag,''))) not in ('EMPRESA', 'PARCEIRO') "
-        "order by id", (PIPELINE_ESC_LEADS,)).fetchall()  # empresa/parceiro nao e lead de reclamante:
+        "order by id", (PIPELINE_ESC_LEADS,)).fetchall()  # empresa/parceiro nao e lead de produtor:
     # nao recebe termometro nem tem a etiqueta reescrita pelo marcador de temperatura
 
     feitos_api = 0
@@ -271,7 +282,7 @@ def main():
         # vez sai de pauta sozinho; quem quer "depois" entra na regua bimestral.
         comercial = d.get("comercial", "segue")
         if comercial == "ja_tem_advogado":
-            # Trabalhador NAO e desqualificado. Quem ja tem advogado sai de
+            # Produtor NAO e desqualificado. Quem ja tem advogado sai de
             # pauta como Perdido - Sem interesse, porque nao da para atuar no caso dele.
             motivo = "ja tem advogado/acao sobre o caso"
             if etapa not in ETAPAS_FECHADAS and etapa not in ETAPAS_SEM_MOVER:
@@ -333,7 +344,7 @@ def main():
 
 
 def inscrever_reaquecimento(cur, dry=False):
-    """Reclamante do quadro Reclamantes com MIN_CONTATOS_REAQUECIMENTO+ mensagens nossas
+    """Produtor do quadro Produtores Rurais com MIN_CONTATOS_REAQUECIMENTO+ mensagens nossas
     depois da ultima fala dele (ou desde sempre, se nunca falou) entra no fluxo
     'reaquecimento'. Uma unica vez por conversa; pula quem tem outro fluxo ativo
     e quem o termometro marcou como sem_caso. Exige 48h de silencio nosso antes

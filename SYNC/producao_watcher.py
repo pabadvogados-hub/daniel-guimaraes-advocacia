@@ -5,7 +5,7 @@ MOTOR DA PRODUCAO DA INICIAL - pipeline Produção (18), etapa
 
 DESDE 28/09/2026 (Advogada): o vigia produz PELA SKILL DA ESTEIRA, do inicio ao fim,
 SEM AVAL. Ele continua dono da COLETA (passo 1 abaixo); a skill
-peticao-inicial-reclamante faz os Passos 1 a 7 (peca modelo MOD_RT, documentos,
+inicial-prorrogacao-divida-rural faz os Passos 1 a 7 (peca modelo MOD_RT, documentos,
 liquidacao, recortes com moldura vermelha, timbrado, Revisora IA) e o
 OPERACIONAL/fechamento_inicial.py faz o Passo 8 (peca em ATOS INTERNOS, tarefa
 da Advogada, PF_RT na agenda, tarefa de protocolo Dra. Advogada). Ver
@@ -821,7 +821,7 @@ def tarefas_advbox(nome, links_txt, executar):
 # "A gente e para voce utilizar a skill de producao de inicial do proprio fluxo, que e
 # sem o aval: pega a nossa peca modelo, verifica os documentos, usa a skill de recortes
 # e depois faz as providencias finais: agenda e as tarefas no ADVBOX para a Advogada e
-# para a Advogada." A skill e a peticao-inicial-reclamante (versao do projeto), instalada
+# para a Advogada." A skill e a inicial-prorrogacao-divida-rural (versao do projeto), instalada
 # com as que ela encadeia em WORK/.claude/skills (fora do git: producao/ e ignorado).
 # O Claude da VPS so enxerga skill de projeto com --setting-sources user,project,local.
 # O fechamento_inicial.py e o DONO UNICO das tarefas e da agenda: neste caminho o vigia
@@ -885,7 +885,7 @@ def pasta_do_caso(cid, nome, reclamada, transcricao, notas, entrevista, ficha, d
 def instrucao_skill(work, nome, reclamada):
     cli, rec = _slug_caso(nome), _slug_caso(reclamada or "RECLAMADA", 40)
     return f"""Voce e a ESTEIRA DA PETICAO INICIAL do Daniel Guimarães Advocacia rodando SOZINHA no vigia da
-producao, sem humano na hora. Use a skill peticao-inicial-reclamante e as que ela encadeia
+producao, sem humano na hora. Use a skill inicial-prorrogacao-divida-rural e as que ela encadeia
 (liquidacao-previa, recorte-de-documentos, timbrado, revisao-controladoria)
 e execute os Passos 1 a 7 DO INICIO AO FIM, SEM PARAR PARA AVAL (determinacao da Dra.
 Advogada de 28/09/2026 para o fluxo do vigia): faca a analise do Passo 1 completa, registre-a
@@ -1094,7 +1094,7 @@ def rodar(executar=False):
             print(f"    CCT ({motivo_cct}): " + " | ".join(c["name"][:60] for c in ccts))
         if not executar:
             print("    (dry-run: pre-requisitos OK; " + (
-                "rodaria a skill peticao-inicial-reclamante do Passo 1 ao 7 e o fechamento: "
+                "rodaria a skill inicial-prorrogacao-divida-rural do Passo 1 ao 7 e o fechamento: "
                 "peca em ATOS INTERNOS, tarefa da Advogada, PF_RT na agenda, protocolo Advogada+Advogada)"
                 if USAR_SKILL else "producao nao roda)"))
             continue

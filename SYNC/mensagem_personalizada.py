@@ -2,9 +2,9 @@
 """Mensagem de retomada escrita UMA A UMA, a partir da conversa de cada lead.
 
 Humana e personalizada, "como se estivessemos pensando unicamente nele". A IA le o que
-o proprio trabalhador contou e escreve
-uma mensagem so para ele, terminando com a pergunta: ainda esta na empresa ou
-ja saiu? Nao pode inventar fato, prometer resultado nem usar travessao.
+o proprio produtor rural contou e escreve uma mensagem so para ele, terminando com a
+pergunta: a divida com o banco ainda esta em dia ou ja venceu / o banco ja comecou a cobrar?
+Nao pode inventar fato, prometer resultado nem usar travessao.
 
   --amostra N   escreve N mensagens para leads reais variados e mostra (nao envia)
 """
@@ -23,34 +23,34 @@ DB = '/opt/escritorio/SISTEMA/backend/sistema_esc.db'
 CLAUDE = os.getenv('ESC_CLAUDE_BIN', os.path.expanduser('~/.local/bin/claude'))
 AGORA_BR = datetime.utcnow() - timedelta(hours=3)
 
-REGRAS = """Voce escreve mensagens de WhatsApp em nome do escritorio Daniel Guimarães Advocacia, que defende trabalhadores na Justica do Trabalho.
+REGRAS = """Voce escreve mensagens de WhatsApp em nome do escritorio Daniel Guimarães Advocacia, que defende o produtor rural em dividas com bancos e cooperativas (credito rural, prorrogacao, execucao, leilao, busca e apreensao).
 
-TAREFA: retomar o contato com um trabalhador que procurou o escritorio ha algumas semanas e perguntar se ele ainda esta na mesma empresa ou se ja saiu.
+TAREFA: retomar o contato com um produtor rural que procurou o escritorio ha algumas semanas e perguntar como esta a divida com o banco: se ainda esta em dia ou se ja venceu, e se o banco ja comecou a cobrar (execucao, leilao, busca e apreensao).
 
 COMO ESCREVER:
 - Como uma pessoa de verdade do escritorio que lembrou DELE especificamente. Ele tem que sentir que a mensagem foi escrita so para ele.
-- Cite um ou dois detalhes que ELE MESMO contou (funcao, rotina, escala, o que incomodava, como era tratado), usando o jeito dele de falar. Nunca invente nada que nao esteja na conversa. Se ele nao contou detalhe nenhum, nao invente: diga que ele procurou a gente querendo saber sobre os seus direitos trabalhistas.
-- Traga SEMPRE uma frase curta com a ideia de justica para o trabalhador: que o trabalho dele merece respeito e que o escritorio existe para que a justica chegue a quem trabalha. Escreva com suas palavras, varie, nao copie esta frase. Sem exagero, sem dramatizar.
+- Cite um ou dois detalhes que ELE MESMO contou (o que planta ou cria, a safra, o banco, o que preocupava), usando o jeito dele de falar. Nunca invente nada que nao esteja na conversa. Se ele nao contou detalhe nenhum, nao invente: diga que ele procurou a gente querendo entender a situacao da divida com o banco.
+- Traga SEMPRE uma frase curta com a ideia de que quem produz merece ser tratado com respeito pelo banco e que o escritorio existe para defender o produtor. Escreva com suas palavras, varie, nao copie esta frase. Sem exagero, sem dramatizar.
 - Trechos marcados com (audio) foram transcritos automaticamente e costumam ter palavras erradas: use so a ideia geral deles, NUNCA cite palavras ou expressoes desses trechos. Se qualquer outro trecho parecer confuso ou sem sentido, ignore.
 - Ele ainda NAO e cliente. Nunca diga que o escritorio esta acompanhando, cuidando, analisando ou de olho no caso dele.
-- Antes de responder, releia cada frase e pergunte: um brasileiro falaria assim no WhatsApp? Reescreva qualquer frase estranha, forcada ou sem sentido.
+- Antes de responder, releia cada frase e pergunte: um produtor falaria assim no WhatsApp? Reescreva qualquer frase estranha, forcada ou sem sentido.
 - Varie a abertura. Nao comece com "Lembramos de voce" e nao use "Passando pra saber".
 - Separe em 2 ou 3 paragrafos curtos, como alguem digitando no WhatsApp.
-- Termine com UMA pergunta direta e simples: se ele ainda esta na mesma empresa ou ja saiu.
+- Termine com UMA pergunta direta e simples: se a parcela ainda esta em dia ou se ja venceu e o banco esta cobrando.
 - Comece com "{saudacao}" e o primeiro nome dele, se houver nome. Diga que e do escritorio Daniel Guimarães Advocacia.
-- Portugues simples, frases curtas, tom de conversa de WhatsApp. De 3 a 5 linhas curtas. No maximo um emoji.
+- Portugues simples, frases curtas, tom de conversa de WhatsApp. De 3 a 5 linhas curtas. Sem emoji.
 - Use "voce conversou com a gente", nunca "voce conversou comigo".
 
 PROIBIDO:
 - Travessao ou hifen como pausa. Use ponto ou virgula.
-- Prometer resultado, valor, advogada, prazo ou dizer que ele "tem direito a receber" algo (regra da OAB).
+- Prometer resultado, valor, prazo, suspensao de leilao ou prorrogacao, ou dizer que ele "tem direito" a algo (regra da OAB).
 - A palavra "garantir" em qualquer forma. Advogado nao garante nada.
-- Citar o nome da empresa dele de forma negativa, acusar a empresa ou pressionar a entrar com processo.
+- Falar mal do banco pelo nome, acusar o banco ou pressionar a entrar com processo.
 - Citar doenca, problema de saude, familia ou qualquer assunto delicado.
 - Mencionar IA, robo, sistema, automacao ou classificacao.
 - Formalidade ("Prezado", "Sr.", "atenciosamente").
 
-SE NAO FOR LEAD TRABALHISTA: se pela conversa ficar claro que a pessoa nao e trabalhador procurando seus direitos (e empresa, propaganda, cobranca, banco, numero errado, alguem vendendo algo), responda apenas a palavra PULAR.
+SE NAO FOR LEAD DE PRODUTOR RURAL: se pela conversa ficar claro que a pessoa nao e produtor rural com divida ou contrato com banco ou cooperativa (e empresa vendendo algo, propaganda, numero errado, assunto trabalhista ou de outra area), responda apenas a palavra PULAR.
 
 Devolva SOMENTE o texto da mensagem, sem aspas e sem explicacao."""
 
@@ -63,7 +63,7 @@ SIGLA_IA = re.compile(r'\bIA\b')   # so a sigla maiuscula: "ia" minusculo e o ve
 def primeiro_nome(n):
     n = ''.join(c for c in (n or '') if c.isalpha() or c == ' ')
     p = (n.split() or [''])[0]
-    ruins = {'regra', 'lead', 'dr', 'sem', 'nome', 'cliente', 'trabalhador'}
+    ruins = {'regra', 'lead', 'dr', 'sem', 'nome', 'cliente', 'trabalhador', 'produtor', 'fazenda', 'sitio'}
     if len(p) < 3 or len(p) > 14 or p.lower() in ruins:
         return ''
     return p.capitalize()
@@ -140,14 +140,14 @@ def escrever(ctx, tentativa=1):
     regras += '\n\nJEITO DE ABRIR ESTA MENSAGEM: %s Escreva diferente de qualquer modelo pronto.' \
               % random.choice(ANGULOS)
     if ctx.get('revisita'):
-        # revisita de 60 dias: ele ja respondeu que ainda trabalhava
+        # revisita de 60 dias: ele ja respondeu que a divida estava em dia
         r = ctx['revisita']
-        regras += ('\n\nESTA MENSAGEM E UMA REVISITA. Em %s ele respondeu que ainda estava na mesma empresa '
+        regras += ('\n\nESTA MENSAGEM E UMA REVISITA. Em %s ele respondeu que a divida ainda estava em dia '
                    '(o que ele escreveu: "%s"). Retome lembrando, com leveza, que da ultima vez ele contou que '
-                   'ainda estava la, e pergunte se continua na mesma empresa ou se ja saiu. Nao copie a resposta '
-                   'dele palavra por palavra, nao cobre e nao pressione.'
+                   'estava em dia, e pergunte como ficou a safra e se a parcela continua em dia ou se venceu. '
+                   'Nao copie a resposta dele palavra por palavra, nao cobre e nao pressione.'
                    % (r.get('quando') or 'algumas semanas atras', (r.get('resposta') or '')[:200]))
-    pedido = ("%s\n\nDADOS DO TRABALHADOR\nPrimeiro nome: %s\nProcurou o escritorio ha cerca de %d semana(s).\n"
+    pedido = ("%s\n\nDADOS DO PRODUTOR\nPrimeiro nome: %s\nProcurou o escritorio ha cerca de %d semana(s).\n"
               "Resumo do caso feito pelo escritorio: %s\nO QUE ELE MESMO ESCREVEU NA CONVERSA (em ordem):\n%s\n"
               % (regras, ctx['nome'] or '(sem nome, nao use nome)', ctx['semanas'], ctx['resumo'] or '-',
                  ctx['dele'] or '(quase nada)'))
@@ -183,8 +183,8 @@ def amostra(n):
     con = sqlite3.connect('file:%s?mode=ro' % DB, uri=True, timeout=20)
     perfis = [
         ("com caso contado, quente", "t.temperatura='quente' and t.violacoes not in ('','[]')"),
-        ("com caso contado, ainda trabalhando", "t.situacao='trabalhando' and t.violacoes not in ('','[]')"),
-        ("morno, nao disse se saiu", "t.temperatura='morno' and t.situacao='nao_informado'"),
+        ("com caso contado, divida em dia", "t.situacao='trabalhando' and t.violacoes not in ('','[]')"),
+        ("morno, nao disse se a divida venceu", "t.temperatura='morno' and t.situacao='nao_informado'"),
         ("frio, falou pouco", "t.temperatura='frio' and t.situacao='nao_informado' and t.violacoes in ('','[]')"),
         ("frio com algum relato", "t.temperatura='frio' and t.violacoes not in ('','[]')"),
         ("contato mais antigo", "t.situacao in ('nao_informado','trabalhando') and v.criado_em < date('now','-60 day')"),

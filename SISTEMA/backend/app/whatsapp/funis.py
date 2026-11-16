@@ -4,28 +4,30 @@ Os IDs são FIXOS de propósito: o seed cria cada quadro com o id abaixo, e os r
 e as telas filtram por esses números. Num banco novo, sem id fixo, o primeiro quadro viraria
 o 1 e todo filtro por id apontaria para o lugar errado.
 
-Operação (kickoff 09/11/2026):
-- Linha FIXA do escritório  -> RECLAMANTES (trabalhador), atendida pela SDR de IA.
-- Número do Dr. Titular        -> EMPRESAS (assessoria corporativa e defesa do empregador).
-- Palestra de 09/12/2026    -> funil próprio da Rescisão Indireta (grupo com aquecimento).
+Operação (nicho: defesa do produtor rural contra bancos):
+- Linha FIXA do escritório  -> PRODUTORES RURAIS (constante RECLAMANTES, id 10), atendida pela SDR de IA.
+- Número do Dr. Titular     -> EMPRESAS (cooperativas, revendas, agroindústrias e empresas do agro).
+- Palestra / evento rural   -> funil próprio (id 31, grupo com aquecimento).
+O nome das CONSTANTES (RECLAMANTES, PALESTRA...) e os IDs ficaram os da base porque robôs e telas
+importam por eles; só os NOMES exibidos e as colunas de campanha mudaram.
 """
 
 # ---------------- IDs ----------------
-RECLAMANTES = 10        # entrada e qualificação do trabalhador até o contrato
+RECLAMANTES = 10        # entrada e qualificação do PRODUTOR RURAL até o contrato
 CLIENTES = 11           # cliente com processo/atendimento em curso
 PRODUCAO = 18           # esteira da inicial: documentos -> produção -> revisão -> distribuição
 CONTRATACAO = 20        # contrato, documentos e assinatura
-EMPRESAS = 30           # linha B2B do Dr. Titular
-PALESTRA = 31           # funil da palestra de Rescisão Indireta
+EMPRESAS = 30           # linha B2B do Dr. Titular (empresas do agro)
+PALESTRA = 31           # funil da palestra / evento rural
 
 # ---------------- Nomes ----------------
 NOME = {
-    RECLAMANTES: 'Reclamantes',
+    RECLAMANTES: 'Produtores Rurais',
     CLIENTES: 'Clientes',
     PRODUCAO: 'Produção',
     CONTRATACAO: 'Contratação',
     EMPRESAS: 'Empresas',
-    PALESTRA: 'Palestra Rescisão Indireta',
+    PALESTRA: 'Palestra Crédito Rural',
 }
 PIPE_LEADS = NOME[RECLAMANTES]
 PIPE_CLIENTES = NOME[CLIENTES]
@@ -34,31 +36,33 @@ PIPE_CONTRATACAO = NOME[CONTRATACAO]
 PIPE_EMPRESAS = NOME[EMPRESAS]
 PIPE_PALESTRA = NOME[PALESTRA]
 
-# ---------------- Colunas de entrada por campanha (Reclamantes) ----------------
+# ---------------- Colunas de entrada por campanha (Produtores Rurais) ----------------
 # O lead de campanha cai direto na coluna da origem; os robôs tratam todas como entrada.
 CAIXA = 'Caixa de Entrada'
-CAMPANHA_FAST_FOOD = 'Campanha Fast-food'
-CAMPANHA_SUPERMERCADO = 'Campanha Supermercado'
-CAMPANHA_ACIDENTE = 'Campanha Acidente de Trabalho'
+CAMPANHA_PRORROGACAO = 'Campanha Prorrogação'            # safra frustrou / parcela não fecha
+CAMPANHA_EXECUCAO = 'Campanha Execução e Leilão'         # execução de cédula, leilão de terra
+CAMPANHA_APREENSAO = 'Campanha Busca e Apreensão'        # máquina/veículo financiado
 CAMPANHA_GERAL = 'Campanha Geral'
-ETAPAS_ENTRADA = (CAIXA, CAMPANHA_FAST_FOOD, CAMPANHA_SUPERMERCADO, CAMPANHA_ACIDENTE, CAMPANHA_GERAL)
+ETAPAS_ENTRADA = (CAIXA, CAMPANHA_PRORROGACAO, CAMPANHA_EXECUCAO, CAMPANHA_APREENSAO, CAMPANHA_GERAL)
 
 # Origem (campo conversa.origem) -> coluna de entrada.
 ORIGEM_PARA_COLUNA = {
-    'Campanha Fast-food': CAMPANHA_FAST_FOOD,
-    'Campanha Supermercado': CAMPANHA_SUPERMERCADO,
-    'Campanha Acidente de Trabalho': CAMPANHA_ACIDENTE,
-    'Campanha Geral': CAMPANHA_GERAL,
+    CAMPANHA_PRORROGACAO: CAMPANHA_PRORROGACAO,
+    CAMPANHA_EXECUCAO: CAMPANHA_EXECUCAO,
+    CAMPANHA_APREENSAO: CAMPANHA_APREENSAO,
+    CAMPANHA_GERAL: CAMPANHA_GERAL,
 }
 
 # Frase exclusiva de cada anúncio (mensagem pré-preenchida do clique para o WhatsApp).
 # Ajuste aqui quando as campanhas forem criadas; comparação sem acento e em minúsculas.
 FRASES_CAMPANHA = {
-    'Campanha Fast-food': ('trabalho em fast food', 'trabalhei em fast food', 'lanchonete'),
-    'Campanha Supermercado': ('trabalho em supermercado', 'trabalhei em supermercado'),
-    'Campanha Acidente de Trabalho': ('acidente de trabalho', 'me acidentei no trabalho', 'sofri um acidente'),
-    'Campanha Geral': ('quero saber meus direitos trabalhistas',),
-    'Campanha Rescisão Indireta': ('palestra', 'rescisao indireta', 'rescisão indireta'),
+    CAMPANHA_PRORROGACAO: ('quero prorrogar minha divida', 'prorrogacao da divida rural', 'perdi a safra',
+                           'a safra frustrou', 'alongamento da divida'),
+    CAMPANHA_EXECUCAO: ('o banco esta me executando', 'execucao da cedula', 'leilao da minha terra',
+                        'leilao da fazenda', 'meu imovel vai a leilao'),
+    CAMPANHA_APREENSAO: ('busca e apreensao', 'tomaram meu trator', 'o banco quer tomar minha maquina'),
+    CAMPANHA_GERAL: ('quero falar sobre minha divida rural', 'divida com o banco'),
+    'Campanha Palestra': ('palestra', 'evento do credito rural'),
 }
 
 QUENTE = 'Lead Quente'
@@ -68,7 +72,7 @@ CONTRATO = 'Contrato / Assinatura'
 
 COLUNAS = {
     RECLAMANTES: [
-        CAIXA, CAMPANHA_FAST_FOOD, CAMPANHA_SUPERMERCADO, CAMPANHA_ACIDENTE, CAMPANHA_GERAL,
+        CAIXA, CAMPANHA_PRORROGACAO, CAMPANHA_EXECUCAO, CAMPANHA_APREENSAO, CAMPANHA_GERAL,
         QUENTE, QUALIFICADO, 'Contatado', 'Pré fechamento [fluxo aquecimento]', 'Em Negociação',
         'Pós-Reunião de Fechamento', CONTRATO, 'Ganho', DESQUALIFICADO,
         'Perdido - Sem resposta', 'Perdido - Sem interesse', 'Perdido',
@@ -88,7 +92,7 @@ COLUNAS = {
     ],
 }
 
-# Ordem em que aparecem no CRM. O primeiro é o padrão da linha de reclamantes.
+# Ordem em que aparecem no CRM. O primeiro é o padrão da linha de produtores rurais.
 ORDEM = [RECLAMANTES, CONTRATACAO, PRODUCAO, CLIENTES, EMPRESAS, PALESTRA]
 
 # Esteira que a automação pode AVANÇAR mesmo com o quadro fixado por gente.

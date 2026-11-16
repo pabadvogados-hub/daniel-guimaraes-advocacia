@@ -1,0 +1,502 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Calculadora do Crédito Rural</title>
+<meta name="description" content="Simule parcelas, total de juros, custo efetivo e o efeito de uma prorrogação no seu financiamento rural. Ferramenta informativa.">
+<!-- ================================================================
+     MODELO DA PAGINA. Nao edite o bloco CONFIG aqui: o comando
+       python main.py calculadora [--whatsapp 55DDDNUMERO]
+     gera saida/calculadora/index.html com os dados e as cores de
+     config_comercial.py.
+     ================================================================ -->
+<!-- CONFIG-INICIO -->
+<script>
+window.CONFIG_CALCULADORA = {
+  whatsapp: "",
+  mensagem: "Olá! Usei a calculadora de crédito rural e gostaria de conversar com a equipe do escritório.",
+  escritorio: "Daniel Guimarães Advocacia",
+  responsavel: "",
+  endereco: "",
+  site: "",
+  instagram: ""
+};
+</script>
+<style>
+:root{
+  --marinho:#1F2A44; --marinho-claro:#2E3B5C; --oliva:#6B7F3A; --oliva-escuro:#55662D; --oliva-claro:#EEF1E4;
+  --texto:#232833; --suave:#5F6672; --linha:#DCE0D3; --fundo:#FFFFFF; --papel:#F7F8F5;
+  --verde:#15803D; --verde-escuro:#106B31;
+}
+</style>
+<!-- CONFIG-FIM -->
+<style>
+:root{
+  --serif:Georgia,"Times New Roman",Times,serif;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--papel);color:var(--texto);font:16px/1.55 var(--sans);padding-bottom:84px}
+a{color:var(--oliva-escuro)}
+.topo{background:var(--marinho);color:#fff;border-bottom:4px solid var(--oliva)}
+.topo .caixa{max-width:1120px;margin:0 auto;padding:20px 16px 22px}
+.marca{font-family:var(--serif);font-size:15px;letter-spacing:.6px;text-transform:uppercase;color:#C9D1C0;margin-bottom:8px}
+h1{font-family:var(--serif);font-size:clamp(24px,4vw,38px);line-height:1.15;margin:0 0 6px;font-weight:700;color:#fff}
+.topo p{margin:0;max-width:720px;color:#D5DAE4}
+main{max-width:1120px;margin:0 auto;padding:22px 16px 40px}
+.grade{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:20px;align-items:start}
+@media (max-width:860px){.grade{grid-template-columns:minmax(0,1fr)}}
+.painel{background:var(--fundo);border:1px solid var(--linha);border-radius:12px;padding:20px;min-width:0}
+@media (max-width:420px){.painel{padding:16px}}
+h2{font-family:var(--serif);font-size:22px;margin:0 0 14px;color:var(--marinho)}
+h3{font-family:var(--serif);font-size:18px;margin:22px 0 8px;color:var(--oliva-escuro)}
+label{display:block;font-weight:600;font-size:14px;margin:14px 0 6px}
+.dica{font-weight:400;color:var(--suave);font-size:13px}
+input,select{width:100%;font:inherit;padding:11px 12px;border:1px solid #C9CFBF;border-radius:8px;background:#fff;color:var(--marinho)}
+input:focus,select:focus,button:focus-visible,a:focus-visible{outline:3px solid rgba(107,127,58,.35);outline-offset:1px;border-color:var(--oliva)}
+.linha2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:420px){.linha2{grid-template-columns:1fr}}
+.opcoes{display:flex;gap:8px;flex-wrap:wrap}
+.opcoes label{margin:0;flex:1 1 140px;display:flex;gap:8px;align-items:center;font-weight:500;border:1px solid #C9CFBF;border-radius:8px;padding:10px 12px;cursor:pointer;background:#fff}
+.opcoes input{width:auto;margin:0;accent-color:var(--oliva)}
+.opcoes label:has(input:checked){border-color:var(--oliva);background:var(--oliva-claro)}
+details{margin-top:14px;border-top:1px dashed var(--linha);padding-top:10px}
+summary{cursor:pointer;font-weight:600;color:var(--oliva-escuro)}
+.botao{display:inline-flex;align-items:center;justify-content:center;gap:10px;width:100%;margin-top:18px;padding:13px 16px;border:0;border-radius:10px;background:var(--marinho);color:#fff;font:600 16px var(--sans);cursor:pointer;text-decoration:none}
+.botao:hover{background:var(--marinho-claro)}
+.botao.verde{background:var(--verde)}
+.botao.verde:hover{background:var(--verde-escuro)}
+.botao.claro{background:#fff;color:var(--marinho);border:1px solid #C9CFBF}
+.botao.claro:hover{background:var(--oliva-claro)}
+.botao svg,.whats-fixo svg{width:22px;height:22px;flex:none}
+.erro{color:#A4251C;font-size:14px;margin-top:10px;min-height:1em}
+.resultados{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+@media (max-width:420px){.resultados{grid-template-columns:1fr}}
+.kpi{border:1px solid var(--linha);border-radius:10px;padding:12px 14px;background:#fff}
+.kpi span{display:block;font-size:13px;color:var(--suave)}
+.kpi b{display:block;font-family:var(--serif);font-size:24px;line-height:1.2;margin-top:2px;word-break:break-word;color:var(--marinho)}
+.kpi.destaque{border-color:var(--oliva);background:var(--oliva-claro)}
+.kpi.destaque b{color:var(--oliva-escuro)}
+.barra{height:16px;border-radius:8px;overflow:hidden;display:flex;margin:14px 0 6px;background:#EEE}
+.barra .p{background:var(--marinho)}
+.barra .j{background:var(--oliva)}
+.legenda{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--suave)}
+.legenda i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:middle}
+.comparacao{margin-top:12px;padding:12px 14px;border-left:4px solid var(--oliva);background:var(--oliva-claro);border-radius:6px;font-size:15px}
+.tabela{overflow-x:auto;margin-top:8px;border:1px solid var(--linha);border-radius:10px;background:#fff}
+table{border-collapse:collapse;width:100%;font-size:13px;min-width:500px}
+th{background:var(--marinho);color:#fff;text-align:right;padding:8px 7px;font-weight:600;white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+td{padding:7px 7px;border-top:1px solid var(--linha);text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+tr.carencia td{color:var(--suave);background:#F6F7F2}
+tr.pula td{text-align:center;color:var(--suave)}
+.vazio{color:var(--suave);font-size:15px;padding:18px;border:1px dashed var(--linha);border-radius:10px;text-align:center;background:#fff}
+.info{margin-top:22px}
+.info .painel p{margin:0 0 10px}
+.aviso{margin-top:18px;font-size:13px;color:var(--suave);border-top:1px solid var(--linha);padding-top:14px}
+.whats{margin-top:14px}
+.whats .check{display:flex;gap:8px;align-items:flex-start;font-weight:400;font-size:14px;margin:10px 0 0}
+.whats .check input{width:auto;margin-top:4px;accent-color:var(--verde)}
+.whats-fixo{position:fixed;right:20px;bottom:20px;z-index:10;display:inline-flex;align-items:center;gap:10px;padding:13px 20px;
+  border-radius:999px;background:var(--verde);color:#fff;text-decoration:none;font:600 15px var(--sans);
+  box-shadow:0 6px 20px rgba(16,107,49,.35)}
+.whats-fixo:hover{background:var(--verde-escuro)}
+@media (max-width:480px){.whats-fixo{left:16px;right:16px;bottom:14px;justify-content:center}}
+footer{background:var(--marinho);color:#D5DAE4;font-size:13px;border-top:4px solid var(--oliva)}
+footer .caixa{max-width:1120px;margin:0 auto;padding:18px 16px}
+footer b{color:#fff;font-family:var(--serif);font-weight:700}
+@media (max-width:600px){
+  .topo .caixa{padding:14px 16px 16px}
+  h1{font-size:26px}
+  .topo p{font-size:15px}
+  main{padding:16px 12px 32px}
+  .kpi b{font-size:22px}
+  .tabela{overflow:visible;border:0;background:transparent}
+  .tabela table{min-width:0;font-size:14px}
+  .tabela thead{display:none}
+  .tabela table,.tabela tbody,.tabela tr,.tabela td{display:block;width:100%}
+  .tabela tr{border:1px solid var(--linha);border-radius:10px;margin:0 0 10px;padding:6px 0;background:#fff}
+  .tabela tr.carencia{background:#F6F7F2}
+  .tabela td{display:flex;justify-content:space-between;gap:12px;border:0;padding:4px 12px;white-space:normal}
+  .tabela td::before{content:attr(data-rotulo);color:var(--suave);text-align:left;font-weight:400}
+  .tabela td:first-child{display:block;text-align:left;font-weight:700;color:var(--marinho);padding-bottom:6px}
+  .tabela td:first-child::before{content:none}
+  .tabela td:empty{display:none}
+  .tabela tr.pula{border-style:dashed}
+  .tabela tr.pula td::before{content:none}
+  .tabela tr.pula td{justify-content:center}
+}
+.so-celular{display:none}
+@media (max-width:600px){.so-celular{display:inline}}
+.whats-fixo.escondido{opacity:0;pointer-events:none;transform:translateY(12px)}
+@media (prefers-reduced-motion:no-preference){.whats-fixo{transition:opacity .2s,transform .2s}.kpi b{transition:color .2s}}
+@media print{body{padding-bottom:0;background:#fff}.whats-fixo,.whats,.botao{display:none}.grade{grid-template-columns:1fr}
+  .topo,footer,th{print-color-adjust:exact;-webkit-print-color-adjust:exact}}
+</style>
+</head>
+<body>
+<header class="topo">
+  <div class="caixa">
+    <div class="marca" id="marca">Daniel Guimarães Advocacia</div>
+    <h1>Calculadora do crédito rural</h1>
+    <p>Veja quanto o seu financiamento custa em juros e quanto a parcela muda com uma prorrogação:
+       parcela, total pago e custo efetivo por ano. Ferramenta informativa; os números ficam só no seu aparelho.</p>
+  </div>
+</header>
+
+<main>
+  <div class="grade">
+    <section class="painel" aria-labelledby="t-dados">
+      <h2 id="t-dados">Dados do financiamento</h2>
+      <form id="form" novalidate>
+        <label for="valor">Valor financiado ou saldo devedor (R$)</label>
+        <input id="valor" inputmode="decimal" autocomplete="off" placeholder="ex.: 500.000,00">
+
+        <label for="taxa">Taxa de juros <span class="dica">(como está na cédula)</span></label>
+        <div class="linha2">
+          <input id="taxa" inputmode="decimal" autocomplete="off" placeholder="ex.: 12,5">
+          <select id="taxaTipo" aria-label="Período da taxa">
+            <option value="aa">% ao ano</option>
+            <option value="am">% ao mês</option>
+          </select>
+        </div>
+
+        <label for="parcelas">Número de parcelas</label>
+        <div class="linha2">
+          <input id="parcelas" inputmode="numeric" autocomplete="off" placeholder="ex.: 5">
+          <select id="periodo" aria-label="Periodicidade das parcelas">
+            <option value="1">parcelas anuais</option>
+            <option value="2">parcelas semestrais</option>
+            <option value="12">parcelas mensais</option>
+          </select>
+        </div>
+
+        <label>Sistema de amortização</label>
+        <div class="opcoes" role="radiogroup">
+          <label><input type="radio" name="sistema" value="price" checked> Price <span class="dica">(parcelas iguais)</span></label>
+          <label><input type="radio" name="sistema" value="sac"> SAC <span class="dica">(parcelas decrescentes)</span></label>
+        </div>
+
+        <label for="carencia">Carência (meses) <span class="dica">até a 1ª parcela do principal; 0 se não tem</span></label>
+        <input id="carencia" inputmode="numeric" autocomplete="off" value="0">
+
+        <label for="carenciaJuros">Na carência, os juros...</label>
+        <select id="carenciaJuros">
+          <option value="pagos">são pagos no período (só juros)</option>
+          <option value="capitalizados">são somados ao saldo devedor</option>
+        </select>
+
+        <details>
+          <summary>Opcional: prorrogação, custos e comparação</summary>
+          <label for="prorAnos">Simular prorrogação: anos a mais no prazo <span class="dica">(mesma taxa)</span></label>
+          <input id="prorAnos" inputmode="numeric" autocomplete="off" placeholder="ex.: 2">
+          <label for="custos">Tarifas, seguros e IOF descontados na liberação (R$)</label>
+          <input id="custos" inputmode="decimal" autocomplete="off" placeholder="ex.: 8.500,00">
+          <label for="taxaComp">Comparar com outra taxa (mesma unidade da taxa acima)</label>
+          <input id="taxaComp" inputmode="decimal" autocomplete="off" placeholder="ex.: 8,0">
+        </details>
+
+        <button class="botao" type="submit">Calcular</button>
+        <div class="erro" id="erro" role="alert"></div>
+      </form>
+    </section>
+
+    <section class="painel" aria-labelledby="t-res" aria-live="polite">
+      <h2 id="t-res">Resultado</h2>
+      <div id="semResultado" class="vazio">Preencha os dados e clique em <b>Calcular</b>.</div>
+      <div id="resultado" hidden>
+        <div class="resultados">
+          <div class="kpi destaque"><span id="rotParcela">Parcela</span><b id="rParcela">-</b></div>
+          <div class="kpi destaque"><span>Total de juros</span><b id="rJuros">-</b></div>
+          <div class="kpi"><span>Total pago</span><b id="rTotal">-</b></div>
+          <div class="kpi"><span>Juros sobre o valor financiado</span><b id="rPct">-</b></div>
+          <div class="kpi"><span>Taxa efetiva ao ano</span><b id="rTaxaAno">-</b></div>
+          <div class="kpi"><span>Custo efetivo anual <span class="dica">(com custos iniciais)</span></span><b id="rCet">-</b></div>
+        </div>
+        <div class="barra" aria-hidden="true"><div class="p" id="barraP"></div><div class="j" id="barraJ"></div></div>
+        <div class="legenda"><span><i style="background:var(--marinho)"></i>Valor financiado</span><span><i style="background:var(--oliva)"></i>Juros e custos</span></div>
+        <div class="comparacao" id="prorrogacao" hidden></div>
+        <div class="comparacao" id="comparacao" hidden></div>
+
+        <h3>Tabela resumida</h3>
+        <div class="tabela"><table>
+          <thead><tr><th>Parcela</th><th>Mês</th><th>Juros</th><th>Amortização</th><th>Pagamento</th><th>Saldo devedor</th></tr></thead>
+          <tbody id="corpoTabela"></tbody>
+        </table></div>
+
+        <div class="whats">
+          <div id="blocoWhats">
+            <label class="check"><input type="checkbox" id="incluir" checked> Incluir o resumo desta simulação na mensagem</label>
+            <a class="botao verde" id="btnWhats" href="#" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>Falar com o escritório pelo WhatsApp</a>
+          </div>
+          <button class="botao claro" type="button" onclick="window.print()">Imprimir ou salvar em PDF</button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <section class="info">
+    <div class="painel">
+      <h2>Frustração de safra e o pedido de prorrogação</h2>
+      <p>O Manual de Crédito Rural do Banco Central (MCR, Capítulo 2, Seção 6, item 4) prevê a prorrogação da
+         dívida rural, mantidos os encargos do contrato, quando o produtor comprova dificuldade temporária de
+         pagamento causada, por exemplo, por dificuldade de comercialização, frustração de safra por fatores
+         adversos (seca, excesso de chuva, pragas) ou outras ocorrências prejudiciais à atividade.</p>
+      <p>A Súmula 298 do Superior Tribunal de Justiça diz que o alongamento de dívida originada de crédito rural
+         não é faculdade da instituição financeira, mas direito do devedor nos termos da lei.</p>
+      <p>Cada situação depende da análise dos contratos, das datas de vencimento e das provas da perda. Para
+         entender a sua, ajuda ter em mãos: cópia das cédulas e aditivos, extratos, comprovantes de pagamento,
+         notificações do banco e o registro da perda (laudo, fotos, notas fiscais de venda).</p>
+      <div class="aviso">
+        <b>Aviso:</b> esta calculadora é apenas informativa. Os valores são aproximados e não substituem a leitura
+        do contrato: capitalização, IOF, seguros, tarifas, correção e encargos de atraso podem alterar o resultado.
+        A taxa anual é tratada como taxa efetiva (juros compostos). A simulação de prorrogação apenas recalcula o
+        cronograma com prazo maior e a mesma taxa; não indica que o banco vai concordar nem o resultado de pedido
+        algum. Não é consultoria jurídica nem financeira e não representa promessa de resultado. Nada do que você
+        digita é enviado a ninguém; o botão do WhatsApp só abre uma conversa se você clicar.
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="caixa">
+    <b id="rodNome">Daniel Guimarães Advocacia</b><br>
+    <span id="rodResp"></span><br>
+    <span id="rodEnd"></span>
+  </div>
+</footer>
+
+<a class="whats-fixo" id="btnWhatsFixo" href="#" target="_blank" rel="noopener" aria-label="Falar com o escritório pelo WhatsApp"><svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg><span>Falar com o escritório</span></a>
+
+<script>
+(function(){
+  var C = window.CONFIG_CALCULADORA || {};
+  var $ = function(id){ return document.getElementById(id); };
+  var BRL = new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'});
+  var PCT = new Intl.NumberFormat('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+  var numeroWhats = String(C.whatsapp || '').replace(/\D/g,'');
+
+  $('marca').textContent = C.escritorio || '';
+  $('rodNome').textContent = C.escritorio || '';
+  $('rodResp').textContent = C.responsavel ? 'Advogado responsável: ' + C.responsavel : '';
+  $('rodEnd').textContent = [C.endereco, C.site, C.instagram].filter(Boolean).join('  |  ');
+  if(!numeroWhats){
+    $('blocoWhats').hidden = true;
+    $('btnWhatsFixo').hidden = true;
+    document.body.style.paddingBottom = '0';
+  }
+
+  function num(txt){
+    txt = String(txt || '').trim().replace(/\s|R\$/g,'');
+    if(!txt) return NaN;
+    if(txt.indexOf(',') >= 0) txt = txt.replace(/\./g,'').replace(',','.');
+    else if(/^\d{1,3}(\.\d{3})+$/.test(txt)) txt = txt.replace(/\./g,'');   // 100.000 = cem mil
+    return parseFloat(txt);
+  }
+  function fmtInput(el){
+    var v = num(el.value);
+    if(!isNaN(v) && v > 0) el.value = v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+  }
+  ['valor','custos'].forEach(function(id){ $(id).addEventListener('blur', function(){ fmtInput(this); }); });
+
+  function taxaMensal(taxa, tipo){
+    var t = taxa / 100;
+    return tipo === 'am' ? t : Math.pow(1 + t, 1/12) - 1;
+  }
+
+  // Monta o cronograma na linha do tempo mensal (mes 0 = liberacao)
+  function simular(p){
+    var im = taxaMensal(p.taxa, p.tipo);
+    var mpp = 12 / p.porAno;                      // meses por parcela
+    var ip = Math.pow(1 + im, mpp) - 1;           // taxa do periodo da parcela
+    var saldo = p.valor, linhas = [], fluxo = [], jurosTotal = 0;
+
+    if(p.carencia > 0){
+      if(p.carenciaJuros === 'capitalizados'){
+        var cresc = p.valor * (Math.pow(1 + im, p.carencia) - 1);
+        saldo += cresc;
+        linhas.push({rot:'Carência', mes:p.carencia, juros:cresc, amort:0, pag:0, saldo:saldo, carencia:true});
+      } else {
+        var mes = 0;
+        while(mes < p.carencia){
+          var passo = Math.min(mpp, p.carencia - mes);
+          mes += passo;
+          var j = saldo * (Math.pow(1 + im, passo) - 1);
+          jurosTotal += j;
+          linhas.push({rot:'Carência', mes:mes, juros:j, amort:0, pag:j, saldo:saldo, carencia:true});
+          fluxo.push({mes:mes, valor:j});
+        }
+      }
+    }
+    var base = saldo, n = p.parcelas;
+    var pmt = ip === 0 ? base / n : base * ip / (1 - Math.pow(1 + ip, -n));
+    var amortSac = base / n, primeira = 0, ultima = 0;
+    for(var k = 1; k <= n; k++){
+      var jk = saldo * ip, ak, pk;
+      if(p.sistema === 'price'){ pk = pmt; ak = pk - jk; }
+      else { ak = amortSac; pk = ak + jk; }
+      if(k === n){ ak = saldo; pk = ak + jk; }
+      saldo = Math.max(0, saldo - ak);
+      jurosTotal += jk;
+      var m = p.carencia + k * mpp;
+      linhas.push({rot:String(k), mes:m, juros:jk, amort:ak, pag:pk, saldo:saldo});
+      fluxo.push({mes:m, valor:pk});
+      if(k === 1) primeira = pk;
+      ultima = pk;
+    }
+    var totalPago = fluxo.reduce(function(s,f){ return s + f.valor; }, 0);
+    jurosTotal = totalPago - p.valor;
+    return {linhas:linhas, fluxo:fluxo, jurosTotal:jurosTotal, totalPago:totalPago,
+            primeira:primeira, ultima:ultima, taxaAno:Math.pow(1 + im, 12) - 1};
+  }
+
+  // Custo efetivo: taxa mensal que iguala o valor liquido recebido aos pagamentos (TIR)
+  function custoEfetivoAnual(liquido, fluxo){
+    if(liquido <= 0) return NaN;
+    function vp(i){ return fluxo.reduce(function(s,f){ return s + f.valor / Math.pow(1 + i, f.mes); }, 0) - liquido; }
+    var lo = -0.99, hi = 1.0;
+    if(vp(lo) * vp(hi) > 0) return NaN;
+    for(var it = 0; it < 200; it++){
+      var mid = (lo + hi) / 2;
+      if(vp(mid) > 0) lo = mid; else hi = mid;
+    }
+    return Math.pow(1 + (lo + hi) / 2, 12) - 1;
+  }
+
+  function ler(){
+    return {
+      valor: num($('valor').value), taxa: num($('taxa').value), tipo: $('taxaTipo').value,
+      parcelas: parseInt($('parcelas').value, 10), porAno: parseInt($('periodo').value, 10),
+      sistema: document.querySelector('input[name=sistema]:checked').value,
+      carencia: parseInt($('carencia').value || '0', 10), carenciaJuros: $('carenciaJuros').value,
+      custos: num($('custos').value) || 0, taxaComp: num($('taxaComp').value),
+      prorAnos: parseInt($('prorAnos').value || '0', 10) || 0
+    };
+  }
+  function validar(p){
+    if(!(p.valor > 0)) return 'Informe o valor financiado ou o saldo devedor.';
+    if(!(p.taxa >= 0) || isNaN(p.taxa)) return 'Informe a taxa de juros.';
+    if(p.tipo === 'am' && p.taxa > 20) return 'Confira a taxa: mais de 20% ao mês parece fora do normal.';
+    if(p.tipo === 'aa' && p.taxa > 300) return 'Confira a taxa: parece alta demais para % ao ano.';
+    if(!(p.parcelas >= 1 && p.parcelas <= 600)) return 'Informe o número de parcelas (de 1 a 600).';
+    if(!(p.carencia >= 0 && p.carencia <= 120)) return 'Carência entre 0 e 120 meses.';
+    if(p.custos < 0 || p.custos >= p.valor) return 'Os custos iniciais precisam ser menores que o valor financiado.';
+    if(p.prorAnos < 0 || p.prorAnos > 30) return 'Prorrogação entre 0 e 30 anos.';
+    return '';
+  }
+
+  var ultimo = null;
+  function mostrar(p, r){
+    var parcelaTxt = p.sistema === 'price' ? BRL.format(r.primeira)
+                     : BRL.format(r.primeira) + ' a ' + BRL.format(r.ultima);
+    var periodoTxt = {1:'anual', 2:'semestral', 12:'mensal'}[p.porAno];
+    $('rotParcela').textContent = 'Parcela ' + periodoTxt + (p.sistema === 'sac' ? ' (1ª à última)' : '');
+    $('rParcela').textContent = parcelaTxt;
+    $('rJuros').textContent = BRL.format(r.jurosTotal);
+    $('rTotal').textContent = BRL.format(r.totalPago);
+    $('rPct').textContent = PCT.format(100 * r.jurosTotal / p.valor) + '%';
+    $('rTaxaAno').textContent = PCT.format(100 * r.taxaAno) + '% a.a.';
+    var cet = custoEfetivoAnual(p.valor - p.custos, r.fluxo);
+    $('rCet').textContent = isNaN(cet) ? '-' : PCT.format(100 * cet) + '% a.a.';
+
+    var custoTotal = r.totalPago - p.valor + p.custos;
+    var pp = Math.max(0, Math.min(100, 100 * p.valor / (p.valor + Math.max(0, custoTotal))));
+    $('barraP').style.width = pp + '%';
+    $('barraJ').style.width = (100 - pp) + '%';
+
+    var pror = $('prorrogacao'), rp = null;
+    if(p.prorAnos > 0){
+      rp = simular(Object.assign({}, p, {parcelas: p.parcelas + p.prorAnos * p.porAno}));
+      var reducao = r.primeira > 0 ? 100 * (1 - rp.primeira / r.primeira) : 0;
+      pror.hidden = false;
+      pror.innerHTML = 'Com <b>' + p.prorAnos + (p.prorAnos === 1 ? ' ano' : ' anos') + ' a mais</b> de prazo (' +
+        (p.parcelas + p.prorAnos * p.porAno) + ' parcelas, mesma taxa), a ' + (p.sistema === 'sac' ? 'primeira ' : '') +
+        'parcela ' + periodoTxt + ' passaria de <b>' + BRL.format(r.primeira) + '</b> para <b>' + BRL.format(rp.primeira) +
+        '</b> (' + PCT.format(reducao) + '% menor). O total de juros iria a <b>' + BRL.format(rp.jurosTotal) +
+        '</b>, porque o prazo é maior. Comparação apenas matemática.';
+    } else { pror.hidden = true; }
+
+    var comp = $('comparacao');
+    if(!isNaN(p.taxaComp) && p.taxaComp >= 0){
+      var r2 = simular(Object.assign({}, p, {taxa: p.taxaComp}));
+      var dif = r.jurosTotal - r2.jurosTotal;
+      var un = p.tipo === 'am' ? '% ao mês' : '% ao ano';
+      comp.hidden = false;
+      comp.innerHTML = 'Com a taxa de <b>' + PCT.format(p.taxaComp) + un + '</b>, o total de juros seria <b>' +
+        BRL.format(r2.jurosTotal) + '</b> - diferença de <b>' + BRL.format(Math.abs(dif)) + '</b> ' +
+        (dif >= 0 ? 'a menos' : 'a mais') + ' que na taxa informada. Comparação apenas matemática.';
+    } else { comp.hidden = true; }
+
+    var corpo = $('corpoTabela'), html = [], L = r.linhas;
+    function linha(l){
+      var rot = l.carencia ? 'Carência' : '<span class="so-celular">Parcela </span>' + l.rot;
+      return '<tr' + (l.carencia ? ' class="carencia"' : '') + '><td data-rotulo="">' + rot + '</td>' +
+        '<td data-rotulo="Mês">' + l.mes + '</td>' +
+        '<td data-rotulo="Juros">' + BRL.format(l.juros) + '</td>' +
+        '<td data-rotulo="Amortização">' + BRL.format(l.amort) + '</td>' +
+        '<td data-rotulo="Pagamento">' + BRL.format(l.pag) + '</td>' +
+        '<td data-rotulo="Saldo devedor">' + BRL.format(l.saldo) + '</td></tr>';
+    }
+    if(L.length <= 30){ L.forEach(function(l){ html.push(linha(l)); }); }
+    else {
+      L.slice(0, 18).forEach(function(l){ html.push(linha(l)); });
+      html.push('<tr class="pula"><td colspan="6">... ' + (L.length - 21) + ' parcelas omitidas ...</td></tr>');
+      L.slice(-3).forEach(function(l){ html.push(linha(l)); });
+    }
+    var somaJ = L.reduce(function(s,l){ return s + l.juros; }, 0);
+    var somaA = L.reduce(function(s,l){ return s + l.amort; }, 0);
+    html.push('<tr><td data-rotulo=""><b>Total</b></td><td data-rotulo=""></td>' +
+      '<td data-rotulo="Juros"><b>' + BRL.format(somaJ) + '</b></td>' +
+      '<td data-rotulo="Amortização"><b>' + BRL.format(somaA) + '</b></td>' +
+      '<td data-rotulo="Pagamento"><b>' + BRL.format(r.totalPago) + '</b></td><td data-rotulo=""></td></tr>');
+    corpo.innerHTML = html.join('');
+
+    $('semResultado').hidden = true;
+    $('resultado').hidden = false;
+    ultimo = {p:p, r:r, rp:rp, parcelaTxt:parcelaTxt, periodoTxt:periodoTxt};
+    atualizarWhats();
+  }
+
+  function atualizarWhats(){
+    if(!numeroWhats) return;
+    var msg = C.mensagem || 'Olá!';
+    if(ultimo && $('incluir').checked){
+      var p = ultimo.p, r = ultimo.r;
+      msg += '\n\nMinha simulação: valor de ' + BRL.format(p.valor) + ', taxa de ' + PCT.format(p.taxa) +
+        (p.tipo === 'am' ? '% ao mês' : '% ao ano') + ', ' + p.parcelas + ' parcelas (' + ultimo.periodoTxt + ', ' +
+        p.sistema.toUpperCase() + '), carência de ' + p.carencia + ' meses. Parcela: ' + ultimo.parcelaTxt +
+        '. Total de juros: ' + BRL.format(r.jurosTotal) + '.';
+      if(ultimo.rp){
+        msg += ' Com ' + p.prorAnos + ' ano(s) a mais de prazo, a parcela seria ' + BRL.format(ultimo.rp.primeira) + '.';
+      }
+    }
+    var link = 'https://wa.me/' + numeroWhats + '?text=' + encodeURIComponent(msg);
+    $('btnWhats').href = link;
+    $('btnWhatsFixo').href = link;
+  }
+  $('incluir').addEventListener('change', atualizarWhats);
+
+  $('form').addEventListener('submit', function(ev){
+    ev.preventDefault();
+    var p = ler(), erro = validar(p);
+    $('erro').textContent = erro;
+    if(erro) return;
+    mostrar(p, simular(p));
+    if (window.matchMedia('(max-width:860px)').matches) {
+      var suave = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      $('t-res').scrollIntoView({behavior: suave ? 'smooth' : 'auto', block: 'start'});
+    }
+  });
+  atualizarWhats();
+  if (numeroWhats && 'IntersectionObserver' in window) {
+    new IntersectionObserver(function(itens){
+      $('btnWhatsFixo').classList.toggle('escondido', itens[0].isIntersecting);
+    }).observe($('btnWhats'));
+  }
+})();
+</script>
+</body>
+</html>

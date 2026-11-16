@@ -25,8 +25,8 @@ from datetime import datetime, timedelta, timezone
 
 DB = '/opt/escritorio/SISTEMA/backend/sistema_esc.db'
 BOARD = 10                                  # quadro Reclamantes
-ENTRADA = ('Caixa de Entrada', 'Campanha Fast-food', 'Campanha Supermercado',
-           'Campanha Acidente de Trabalho', 'Campanha Geral')
+ENTRADA = ('Caixa de Entrada', 'Campanha Prorrogação', 'Campanha Execução e Leilão',
+           'Campanha Busca e Apreensão', 'Campanha Geral')
 PARA = 'Contatado'
 ORIGEM = 'card_apos_ligacao'
 FOLGA_MIN = 30          # tempo que a equipe tem para mover a mao antes de mim

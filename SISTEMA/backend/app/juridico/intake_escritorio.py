@@ -3,10 +3,10 @@
 
 run_intake(transcricao, docs_extras, modo_teste, dados_crm, qualificacao) faz, em ordem:
   1. le a transcricao/ficha da reuniao e os documentos (pdf, docx, txt; imagem por OCR se houver);
-  2. IA monta a FICHA DO CLIENTE (JSON): qualificacao, reclamada, resumo, direitos, pontos de
-     atencao e documentos que faltam. Documento vence conversa: `qualificacao` (lida da CNH/RG/CTPS)
-     sobrescreve o que a IA ouviu;
-  3. cria no Drive RECLAMANTE > NOME DO CLIENTE com as subpastas padrao
+  2. IA monta a FICHA DO CLIENTE (JSON): qualificacao, banco credor, atividade rural, dividas,
+     garantias, resumo, teses, pontos de atencao e documentos que faltam. Documento vence conversa:
+     `qualificacao` (lida da CNH/RG) sobrescreve o que a IA ouviu;
+  3. cria no Drive a pasta do cliente (CLIENTES > NOME DO CLIENTE) com as subpastas padrao
      (ESC_SUBPASTAS_CLIENTE, por padrao ATOS INTERNOS, DOCUMENTOS DO CLIENTE, PASTA DO CLIENTE);
   4. gera Ficha (docx), Contrato de Honorarios e Procuracao a partir de juridico/modelos/ e sobe
      em ATOS INTERNOS; os documentos do cliente vao para DOCUMENTOS DO CLIENTE;
@@ -29,26 +29,40 @@ MODELOS = AQUI / 'modelos'
 DB = Path(__file__).resolve().parents[2] / 'sistema_esc.db'
 MODELO_IA = os.getenv('ESC_MODELO_INTAKE', 'claude-opus-5-5')
 CIDADE = os.getenv('ESC_CIDADE_ESCRITORIO', 'Cidade')
-RESPONSAVEL = os.getenv('ESC_RESPONSAVEL_PROCESSO', 'ADVOGADA KAREN BARBOSA DOS GUIMARÃES ADVOCACIA')
+RESPONSAVEL = os.getenv('ESC_RESPONSAVEL_PROCESSO', 'DANIEL GUIMARÃES ADVOCACIA')
 SUBPASTAS = [s.strip() for s in os.getenv('ESC_SUBPASTAS_CLIENTE',
                                          'ATOS INTERNOS,DOCUMENTOS DO CLIENTE,PASTA DO CLIENTE').split(',') if s.strip()]
 PREENCHER = '[PREENCHER: %s]'
 MESES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro',
          'outubro', 'novembro', 'dezembro']
 
-CAMPOS = ['nome', 'cpf', 'rg', 'nacionalidade', 'estado_civil', 'profissao', 'data_nascimento', 'telefone', 'email',
-          'endereco', 'bairro', 'cidade', 'estado', 'cep', 'reclamada', 'cnpj_reclamada', 'funcao', 'admissao',
-          'demissao', 'motivo_saida', 'ultimo_salario', 'tipo_acao', 'resumo_caso', 'direitos', 'pontos_atencao',
-          'documentos_faltantes', 'origem', 'indicante']
+CAMPOS = ['nome', 'cpf', 'rg', 'nacionalidade', 'estado_civil', 'conjuge', 'cpf_conjuge', 'profissao',
+          'data_nascimento', 'telefone', 'email', 'endereco', 'bairro', 'cidade', 'estado', 'cep',
+          'banco_credor', 'cnpj_banco', 'atividade_rural', 'area_ha', 'pequena_propriedade', 'imovel_rural',
+          'linhas_credito', 'valor_divida', 'vencimento', 'garantias', 'evento_perda', 'prova_perda',
+          'pedido_prorrogacao', 'situacao_cobranca', 'data_urgente', 'tipo_acao', 'resumo_caso', 'direitos',
+          'pontos_atencao', 'documentos_faltantes', 'origem', 'indicante']
+LISTAS = ('direitos', 'pontos_atencao', 'documentos_faltantes')
 
-PROMPT = """Voce e a advogada de triagem do escritorio (trabalhista, lado do reclamante, TRT-2).
+PROMPT = """Voce e o advogado de triagem do escritorio (defesa do PRODUTOR RURAL contra bancos e cooperativas:
+prorrogacao e alongamento de credito rural, execucao de cedula rural, leilao, busca e apreensao, revisional).
 Leia a transcricao/ficha da reuniao e os documentos e devolva SO um JSON com as chaves:
 %s
+Significado: banco_credor = banco ou cooperativa credora (se mais de um, separe por ";");
+atividade_rural = o que planta ou cria; area_ha = area em hectares e se e propria, arrendada ou parceria;
+pequena_propriedade = "sim" se ate 4 modulos fiscais e trabalhada pela familia, "nao" ou "";
+imovel_rural = nome do imovel, matricula e municipio; linhas_credito = cedulas e linhas (custeio,
+investimento, Pronaf, Pronamp, Funcafe, CPR, CCB) com numero e data quando houver; valor_divida e
+vencimento = valores e datas; garantias = hipoteca, alienacao fiduciaria, penhor, aval; evento_perda =
+seca, geada, chuva, praga, queda de preco; prova_perda = laudo, Proagro, seguro, decreto de emergencia;
+pedido_prorrogacao = se pediu ao banco, quando, como e a resposta; situacao_cobranca = em dia, vencida,
+negativado, execucao, leilao, busca e apreensao; data_urgente = data do leilao, citacao ou mandado.
 Regras: nunca invente; o que nao estiver no material fica "" (string vazia). "direitos",
-"pontos_atencao" e "documentos_faltantes" sao listas de frases curtas. Em "direitos" liste o que o
-caso sustenta (horas extras, intervalo, verbas rescisorias, FGTS, insalubridade, periculosidade,
-dano moral, rescisao indireta, acidente de trabalho, vinculo etc.), cada um com o fato que o apoia.
-CPF no formato 000.000.000-00; datas DD/MM/AAAA.""" % ', '.join(CAMPOS)
+"pontos_atencao" e "documentos_faltantes" sao listas de frases curtas. Em "direitos" liste as teses que o
+caso sustenta (prorrogacao por frustracao de safra ou dificuldade de comercializacao, alongamento,
+impenhorabilidade da pequena propriedade rural, nulidade ou excesso de execucao, encargos abusivos,
+venda casada, irregularidade no leilao ou na consolidacao da propriedade etc.), cada uma com o fato que
+a apoia. CPF no formato 000.000.000-00; datas DD/MM/AAAA.""" % ', '.join(CAMPOS)
 
 
 # ------------------------------------------------------------------ leitura
@@ -100,7 +114,7 @@ def ler_json(bruto):
     m = re.search(r'\{.*\}', bruto or '', re.S)
     dados = json.loads(m.group(0)) if m else {}
     for c in CAMPOS:
-        dados.setdefault(c, [] if c in ('direitos', 'pontos_atencao', 'documentos_faltantes') else '')
+        dados.setdefault(c, [] if c in LISTAS else '')
     return dados
 
 
@@ -156,7 +170,11 @@ def gerar_documentos(dados, pasta_local):
     trocas = [('DADOS DO CLIENTE', qual), ('NOME DO CLIENTE', nome.upper()),
               ('%s, data.' % CIDADE, data), ('Cidade, data.', data)]
     saida = []
-    for arq, rot in (('CONTRATO_HONORARIOS_RECLAMANTE.docx', 'Contrato de Honorarios'),
+    # modelo do contrato: CONTRATO_HONORARIOS.docx (padrao do escritorio); o nome antigo da base
+    # (CONTRATO_HONORARIOS_RECLAMANTE.docx) ainda e aceito como reserva.
+    contrato = next((a for a in ('CONTRATO_HONORARIOS.docx', 'CONTRATO_HONORARIOS_RECLAMANTE.docx')
+                     if (MODELOS / a).exists()), 'CONTRATO_HONORARIOS.docx')
+    for arq, rot in ((contrato, 'Contrato de Honorarios'),
                      ('PROCURACAO.docx', 'Procuracao')):
         if (MODELOS / arq).exists():
             dst = Path(pasta_local) / ('%s - %s.docx' % (nome, rot))
@@ -171,13 +189,24 @@ def gerar_documentos(dados, pasta_local):
 def gerar_ficha(dados, destino):
     linhas = ['FICHA DO CLIENTE', '', 'QUALIFICAÇÃO', qualificacao_texto(dados), '',
               'CONTATO', 'Telefone: %s | E-mail: %s' % (dados.get('telefone') or '-', dados.get('email') or '-'), '',
-              'RECLAMADA', '%s %s' % (dados.get('reclamada') or PREENCHER % 'reclamada',
-                                     ('(CNPJ %s)' % dados['cnpj_reclamada']) if dados.get('cnpj_reclamada') else ''), '',
-              'CONTRATO DE TRABALHO',
-              'Função: %s | Admissão: %s | Saída: %s (%s) | Último salário: %s' % (
-                  dados.get('funcao') or '-', dados.get('admissao') or '-', dados.get('demissao') or '-',
-                  dados.get('motivo_saida') or '-', dados.get('ultimo_salario') or '-'), '',
-              'RESUMO DO CASO', dados.get('resumo_caso') or '-', '', 'DIREITOS A VALIDAR']
+              'CÔNJUGE', '%s %s' % (dados.get('conjuge') or '-',
+                                    ('(CPF %s)' % dados['cpf_conjuge']) if dados.get('cpf_conjuge') else ''), '',
+              'BANCO CREDOR', '%s %s' % (dados.get('banco_credor') or PREENCHER % 'banco credor',
+                                         ('(CNPJ %s)' % dados['cnpj_banco']) if dados.get('cnpj_banco') else ''), '',
+              'ATIVIDADE RURAL',
+              'Atividade: %s | Área: %s | Pequena propriedade familiar: %s' % (
+                  dados.get('atividade_rural') or '-', dados.get('area_ha') or '-',
+                  dados.get('pequena_propriedade') or '-'),
+              'Imóvel: %s' % (dados.get('imovel_rural') or '-'), '',
+              'DÍVIDA E COBRANÇA',
+              'Cédulas/linhas: %s' % (dados.get('linhas_credito') or '-'),
+              'Valor: %s | Vencimento: %s | Garantias: %s' % (
+                  dados.get('valor_divida') or '-', dados.get('vencimento') or '-', dados.get('garantias') or '-'),
+              'Evento de perda: %s | Prova: %s' % (dados.get('evento_perda') or '-', dados.get('prova_perda') or '-'),
+              'Pedido de prorrogação ao banco: %s' % (dados.get('pedido_prorrogacao') or '-'),
+              'Situação da cobrança: %s | Data urgente (leilão/citação/mandado): %s' % (
+                  dados.get('situacao_cobranca') or '-', dados.get('data_urgente') or '-'), '',
+              'RESUMO DO CASO', dados.get('resumo_caso') or '-', '', 'TESES A VALIDAR']
     linhas += ['- %s' % x for x in (dados.get('direitos') or ['-'])]
     linhas += ['', 'PONTOS DE ATENÇÃO'] + ['- %s' % x for x in (dados.get('pontos_atencao') or ['-'])]
     linhas += ['', 'DOCUMENTOS QUE FALTAM'] + ['- %s' % x for x in (dados.get('documentos_faltantes') or ['-'])]
@@ -254,7 +283,7 @@ def gravar_no_sistema(dados, pasta_link, origem='', db=DB):
                 'INSERT INTO jur_processos (numero, protocolo, area, tipo, fase, etapa, responsavel, encerrado, '
                 'status_encerramento, data_processo, pasta, valor_expectativa, valor_honorarios, contingencia, notas, '
                 'criado_em, atualizado_em) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
-                ('', '', 'TRABALHISTA RECLAMANTE', (dados.get('tipo_acao') or 'TRABALHISTA')[:120],
+                ('', '', 'CRÉDITO RURAL', (dados.get('tipo_acao') or 'CRÉDITO RURAL')[:120],
                  'FASE DE CONTRATAÇÃO', 'NEGOCIAÇÃO', RESPONSAVEL, 0, '', '', '', 0.0, 0.0, 0.0, notas, agora, agora))
             pid = cur.lastrowid
             cl = con.execute('SELECT nome, documento FROM jur_clientes WHERE id=?', (cid,)).fetchone()
@@ -280,7 +309,7 @@ def run_intake(pdf_path, docs_extras=None, modo_teste=False, dados_crm=None, qua
     print('\n2. Ficha do cliente pela IA...')
     dados = dict(dados_prontos) if dados_prontos else analisar(texto, docs_texto)
     for c in CAMPOS:
-        dados.setdefault(c, [] if c in ('direitos', 'pontos_atencao', 'documentos_faltantes') else '')
+        dados.setdefault(c, [] if c in LISTAS else '')
     for c in ('telefone', 'email', 'origem', 'indicante'):
         if not dados.get(c) and (dados_crm or {}).get(c):
             dados[c] = dados_crm[c]
@@ -291,7 +320,7 @@ def run_intake(pdf_path, docs_extras=None, modo_teste=False, dados_crm=None, qua
         if trocados:
             print('   Qualificacao vinda dos DOCUMENTOS: %s' % ', '.join(trocados))
     nome = (dados.get('nome') or '').strip() or 'CLIENTE SEM NOME'
-    print('   Cliente: %s | Reclamada: %s' % (nome, dados.get('reclamada') or '(nao identificada)'))
+    print('   Cliente: %s | Banco credor: %s' % (nome, dados.get('banco_credor') or '(nao identificado)'))
 
     pasta_local = Path(tempfile.mkdtemp(prefix='intake_'))
     print('\n3. Gerando Ficha, Contrato e Procuracao...')
@@ -355,15 +384,18 @@ def run_intake(pdf_path, docs_extras=None, modo_teste=False, dados_crm=None, qua
                     print('   %s: %s' % (rot, ((r or {}).get('signers') or [{}])[0].get('sign_url') or r))
             except Exception as e:
                 print('   Aviso: ZapSign nao enviou: %s' % e)
-    print('\n--- INTAKE FINALIZADO ---\nPasta do cliente: RECLAMANTE > %s\n%s' % (nome.upper(), link))
+    print('\n--- INTAKE FINALIZADO ---\nPasta do cliente: %s\n%s' % (nome.upper(), link))
     return resultado
 
 
 if __name__ == '__main__':  # teste offline, sem IA, sem Drive, sem banco
     exemplo = {'nome': 'Fulano de Tal', 'cpf': '000.000.000-00', 'rg': '00.000.000-0', 'nacionalidade': 'brasileiro',
-               'estado_civil': 'solteiro', 'profissao': 'operador de caixa', 'endereco': 'Rua Exemplo, 100',
-               'bairro': 'Centro', 'cidade': 'Cidade', 'estado': 'SP', 'cep': '08600-000', 'reclamada': 'MERCADO X LTDA',
-               'direitos': ['horas extras: fechava o caixa depois de bater o ponto'], 'documentos_faltantes': ['CTPS']}
+               'estado_civil': 'casado', 'conjuge': 'Beltrana de Tal', 'profissao': 'produtor rural',
+               'endereco': 'Estrada Rural Exemplo, km 10', 'bairro': 'Zona Rural', 'cidade': 'Cidade', 'estado': 'UF',
+               'cep': '00000-000', 'banco_credor': 'BANCO X S.A.', 'atividade_rural': 'soja e milho',
+               'area_ha': '300 ha, propria', 'valor_divida': 'R$ 850.000,00', 'situacao_cobranca': 'vencida',
+               'direitos': ['prorrogacao: frustracao da safra por estiagem, com laudo agronomico'],
+               'documentos_faltantes': ['matricula do imovel', 'CCIR']}
     r = run_intake('', modo_teste=True, dados_prontos=exemplo)
     assert len(r['documentos']) == 3 and not r['pendencias'], r['pendencias']
     sem_cpf = dict(exemplo, cpf='')

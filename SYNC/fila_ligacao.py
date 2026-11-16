@@ -109,8 +109,10 @@ def roteiro(c):
     env = dict(os.environ)
     env.pop('ANTHROPIC_API_KEY', None)          # o CLI usa o login dele
     prompt = (
-        'Voce treina vendedores de um escritorio de advocacia trabalhista que defende '
-        'TRABALHADORES (rescisao indireta, acidente de trabalho, fast-food, supermercado). Um vendedor novo, que nao conhece o caso, vai LIGAR para este '
+        'Voce treina vendedores de um escritorio de advocacia que defende o PRODUTOR RURAL '
+        'contra bancos (prorrogacao de credito rural, execucao, leilao, busca e apreensao, revisional). '
+        'Se houver leilao marcado, citacao ou busca e apreensao, a ABERTURA ja confirma a data. '
+        'Um vendedor novo, que nao conhece o caso, vai LIGAR para este '
         'lead agora. Escreva o briefing da ligacao.\n\n'
         'Formato exato, sem titulo e sem introducao:\n'
         'ABERTURA: uma frase para a primeira coisa a dizer ao telefone\n'
@@ -118,7 +120,7 @@ def roteiro(c):
         'ATENCAO: o risco ou a objecao dessa conversa especifica, em uma frase\n\n'
         'REGRAS: linguagem simples e didatica; NUNCA prometer resultado, valor ou ganho '
         'de causa (Provimento 205/2021 da OAB); nao usar travessao; o objetivo da '
-        'ligacao e agendar a reuniao de fechamento com a advogada.\n\n'
+        'ligacao e agendar a reuniao de fechamento com o advogado.\n\n'
         f"LEAD: {c.get('nome') or 'sem nome'}\n"
         f"SITUACAO: {c.get('situacao') or 'nao informado'}\n"
         f"CASO: {c.get('violacao') or 'nao detalhado'}\n"
@@ -138,8 +140,8 @@ def roteiro(c):
     if not texto or len(texto) < 20:
         texto = ('ABERTURA: aqui e do escritorio Guimarães Advocacia, vi que voce respondeu no WhatsApp '
                  'sobre o seu caso e liguei para entender melhor.\n'
-                 'PERGUNTAR: ha quanto tempo trabalha ou trabalhou nessa empresa? '
-                 'Tem algum documento guardado, holerite ou extrato?\n'
+                 'PERGUNTAR: qual banco e qual o valor da divida, e ja venceu? '
+                 'O banco ja entrou na Justica, marcou leilao ou pediu maquina de volta?\n'
                  'ATENCAO: confirmar se ja tem advogado antes de seguir.')
     texto = texto.replace(' — ', ', ').replace('—', ',')
     cache[k] = texto
@@ -267,7 +269,7 @@ footer{{margin-top:34px;padding-top:16px;border-top:1px solid var(--hair);color:
 <p class="sub">Quem respondeu no WhatsApp e está esperando o telefone tocar. Ordem de prioridade: mais quente e esperando há mais tempo primeiro.</p>
 <p class="st">Atualizado em {hoje} · sai da lista sozinho quando o card mudar de etapa no CRM</p></header>
 {corpo}
-<footer>Objetivo da ligação: agendar a reunião de fechamento com a advogada responsável. Nunca prometer resultado ou valor, por causa do Provimento 205/2021 da OAB. Se a pessoa disser que já tem advogado ou já entrou com ação, encerrar com cordialidade e mover o card para Lead Desqualificado.</footer>
+<footer>Objetivo da ligação: agendar a reunião de fechamento com o advogado responsável. Nunca prometer resultado ou valor, por causa do Provimento 205/2021 da OAB. Se a pessoa disser que já tem advogado ou já entrou com ação, encerrar com cordialidade e mover o card para Lead Desqualificado.</footer>
 </div></body></html>"""
 
 

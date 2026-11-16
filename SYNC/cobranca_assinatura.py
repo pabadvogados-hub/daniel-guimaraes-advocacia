@@ -19,7 +19,7 @@ Fluxo:
 
 Comandos:
   Inscrever (descobre os tokens pelo nome no ZapSign):
-    python cobranca_assinatura.py --enroll --nome "Jetro Correa de Sousa" --tel "19995153482"
+    python cobranca_assinatura.py --enroll --nome "Fulano de Tal" --tel "00900000000"
   Processar a fila (simulacao, padrao):
     python cobranca_assinatura.py
   Processar de verdade (envia pela D-API):
@@ -160,49 +160,48 @@ def _video_junto(c):
 def msg(dia, nome):
     p = (nome or "").split()[0].title() if nome else "amigo(a)"
     L = {
-        # D+1 - leve, acolhedor, respeita o descanso do motorista
-        1: (f"Oi, {p}! Tudo joia por ai? \U0001F69B\U0001F49A\n\n"
-            f"Sei que a estrada e puxada e o descanso e sagrado, entao vou ser rapidinho \U0001F64F\n\n"
-            f"A parte mais dificil voce ja venceu. Agora falta so um passinho simples: assinar seus "
-            f"documentos no celular (leva uns 2 minutinhos ⏱️). Ai a gente ja comeca a caminhar "
-            f"juntinho com voce \U0001F91D\n\n"
-            f"To aqui pro que precisar, viu? \U0001F49B\nDaniel Guimarães Advocacia"),
-        # D+2 - aspiracao / alivio, afetuoso (sem prometer resultado)
-        2: (f"{p}, que bom te encontrar por aqui \U0001F60A\n\n"
-            f"Pensa so: depois de tanto rodar, ter alguem batalhando pelos SEUS direitos enquanto "
-            f"voce cuida da sua vida e da sua familia ❤️ E disso que a gente cuida pra voce.\n\n"
-            f"Falta so a sua assininha pra dar o start \U0001F680 Qualquer duvida, e so me chamar, ta? ⚖️\n"
+        # D+1 - leve, acolhedor, respeita a rotina do campo
+        1: (f"Ola, {p}! Tudo certo por ai?\n\n"
+            f"Sei que a lida no campo nao para, entao vou ser rapido.\n\n"
+            f"A parte mais dificil voce ja fez. Agora falta so um passo simples: assinar seus "
+            f"documentos no celular (leva uns 2 minutos). Ai a gente ja comeca a cuidar da sua "
+            f"divida com o banco junto com voce.\n\n"
+            f"Estou aqui para o que precisar.\nDaniel Guimarães Advocacia"),
+        # D+2 - alivio, afetuoso (sem prometer resultado)
+        2: (f"{p}, que bom falar com voce de novo.\n\n"
+            f"Pensa so: ter alguem cuidando da conversa com o banco enquanto voce cuida da "
+            f"lavoura, da criacao e da sua familia. E disso que a gente cuida para voce.\n\n"
+            f"Falta so a sua assinatura para comecar. Qualquer duvida, e so me chamar.\n"
             f"Daniel Guimarães Advocacia"),
         # D+3 - prova social ETICA (pertencimento, sem valores/promessa) + docs
-        3: (f"Oi, {p}! \U0001F44B\U0001F49B\n\n"
-            f"Muita gente da estrada, motorista igualzinho a voce, ja deu esse mesmo passo e hoje "
-            f"dorme mais tranquilo por ter ido atras do que era seu \U0001F319✨ Voce esta a uma "
-            f"assinatura de comecar essa virada.\n\n"
-            f"Se o link travou, me avisa que reenvio rapidinho \U0001F501 E quando puder, separa os "
-            f"holerites e o termo de rescisao que voce tiver, que dao uma forca enorme no seu caso \U0001F4AA\U0001F4C4\n"
+        3: (f"Ola, {p}!\n\n"
+            f"Muito produtor, na mesma situacao que voce, ja deu esse passo e hoje dorme mais "
+            f"tranquilo por ter enfrentado a divida com orientacao. Voce esta a uma assinatura "
+            f"de comecar.\n\n"
+            f"Se o link travou, me avisa que reenvio rapidinho. E quando puder, separe as cedulas "
+            f"e os contratos do banco que voce tiver, eles sao o ponto de partida da analise.\n"
             f"Daniel Guimarães Advocacia"),
         # D+4 - cuidado + urgencia gentil (prazo), sem pressao
-        4: (f"{p}, sei que a correria na boleia nao para \U0001F69A\U0001F4A8\n\n"
-            f"Passo aqui so com carinho pra nao deixar seu caso esperando, porque a Justica tem "
-            f"seus prazos e eu quero o melhor pra voce ❤️\n\n"
-            f"Consegue dar essa assinada hoje? Se pintar qualquer dificuldade, conta comigo \U0001F917\n"
+        4: (f"{p}, sei que a rotina no campo e corrida.\n\n"
+            f"Passo aqui so para nao deixar seu caso esperando, porque o banco tem os prazos "
+            f"dele e eu quero o melhor para voce.\n\n"
+            f"Consegue dar essa assinada hoje? Se tiver qualquer dificuldade, conta comigo.\n"
             f"Daniel Guimarães Advocacia"),
         # D+5 - humaniza, oferece ligacao, no seu tempo
-        5: (f"Oi, {p}! \U0001F4DE\U0001F49B\n\n"
-            f"Se ficar mais facil, eu te ligo e a gente assina juntinho, com calma, no seu tempo. "
-            f"Me diz um horario bom que eu te chamo \U0001F642\n\n"
-            f"Voce nao ta sozinho nessa, a gente vai lado a lado ate o fim \U0001F91D\n"
+        5: (f"Ola, {p}!\n\n"
+            f"Se ficar mais facil, eu te ligo e a gente assina junto, com calma, no seu tempo. "
+            f"Me diz um horario bom que eu te chamo.\n\n"
+            f"Voce nao esta sozinho nessa, a gente vai lado a lado ate o fim.\n"
             f"Daniel Guimarães Advocacia"),
-        # D+6 - ultima automatica, calorosa e festiva
-        6: (f"{p}, essa e minha ultima mensagem automatica por aqui \U0001F60A\n\n"
-            f"Seria uma pena seu caso ficar parado tao pertinho de comecar, ne? Falta so voce \U0001F49A "
-            f"Se der pra assinar hoje, ja entramos com tudo por voce.\n\n"
-            f"E quando assinar... e festa desse lado! \U0001F389\U0001F973\n"
+        # D+6 - ultima automatica, calorosa
+        6: (f"{p}, essa e minha ultima mensagem automatica por aqui.\n\n"
+            f"Seria uma pena seu caso ficar parado tao perto de comecar, ne? Falta so voce. "
+            f"Se der para assinar hoje, ja comecamos a trabalhar no seu caso.\n"
             f"Daniel Guimarães Advocacia"),
         # D+7 - handoff humano, com carinho
-        7: (f"{p}, vou pedir com todo carinho pra uma pessoa do nosso time te chamar pessoalmente "
-            f"pra te ajudar a concluir, pode ser? \U0001F91D\n\n"
-            f"Voce e importante pra gente e a gente nao quer que voce perca essa oportunidade \U0001F49B\n"
+        7: (f"{p}, vou pedir para uma pessoa da nossa equipe te chamar pessoalmente "
+            f"para te ajudar a concluir, pode ser?\n\n"
+            f"Voce e importante para a gente e nao queremos que voce perca esse momento.\n"
             f"Daniel Guimarães Advocacia"),
     }
     return L.get(min(dia, MAX_DIA), L[MAX_DIA])
@@ -312,14 +311,12 @@ def _tarefa_ligacao(c, nome, motivo, detalhe):
 
 def msg_assinou(nome):
     p = (nome or "").split()[0].title() if nome else "amigo(a)"
-    return (f"Ihuuul, {p}! \U0001F389✅ Assinaturas confirmadas! Muito obrigado pela confianca \U0001F64F\U0001F49B\n\n"
-            # sem citar documento aqui (caso Abel, 25/09): a mensagem pedia holerite e
-            # TRCT a quem nunca foi registrado. O que falta sai da cobranca de documentos,
+    return (f"{p}, assinaturas confirmadas! Muito obrigado pela confianca.\n\n"
+            # sem citar documento aqui: o que falta sai da cobranca de documentos,
             # que ja olha a conversa e o caso antes de pedir.
-            f"Agora e correr pra dar entrada no seu caso \U0001F680 O que voce ja mandou aqui "
-            f"a gente ja guardou certinho. Se faltar alguma coisa pro seu caso, eu te aviso "
-            f"por aqui, so o que faltar mesmo.\n\n"
-            f"Bora nessa estrada juntos! \U0001F69B⚖️\nDaniel Guimarães Advocacia")
+            f"Agora e com a gente. O que voce ja mandou aqui ja esta guardado. Se faltar "
+            f"alguma coisa para a analise do seu caso, eu te aviso por aqui, so o que faltar mesmo.\n\n"
+            f"Conte com a gente.\nDaniel Guimarães Advocacia")
 
 
 # ------------------------------------------------------------------ fila
@@ -374,8 +371,8 @@ def inscricao_viva(clientes, nome="", telefone=""):
 
     Inscricao encerrada e de um caso ANTERIOR. Cliente que fecha um caso novo
     precisa de inscricao propria: casando por pessoa, ele recebia de volta os
-    links que ja tinha assinado meses antes (Advogada, 29/10/2026, 2o contrato do
-    Oziel). Casa por chave, pelo nome de dentro e pelo telefone (ultimos 8),
+    links que ja tinha assinado meses antes (caso real da base: 2o contrato de um
+    mesmo cliente). Casa por chave, pelo nome de dentro e pelo telefone (ultimos 8),
     como antes, mas so devolve inscricao viva.
     """
     base = (nome or "").strip().lower()
@@ -516,7 +513,7 @@ ETAPAS_CONTRATACAO_20 = ("Documentos Conferidos", "Contrato no ZapSign")
 
 
 def enroll_etapa():
-    """Varre o Sistema Guimarães Advocacia (pipeline Reclamantes) e tenta inscrever quem esta nas
+    """Varre o Sistema Guimarães Advocacia (pipeline Produtores Rurais) e tenta inscrever quem esta nas
     etapas de contrato e ainda nao esta na fila. O gate real e o ZapSign: se o
     contrato ainda nao existe la, nada acontece e a proxima rodada tenta de
     novo. Leitura do banco em modo somente-leitura."""
@@ -582,7 +579,7 @@ def processar():
 
     for nome, c in fila["clientes"].items():
         if c.get("encerrado"):
-            # (Advogada, 07/10/2026) parar de COBRAR nao pode parar de VERIFICAR: o Jonathan
+            # (Advogada, 07/10/2026) parar de COBRAR nao pode parar de VERIFICAR: um cliente
             # assinou em 06/10 e o card ficou parado em "Contrato no ZapSign" porque a fila
             # dele estava encerrada (ele pediu para nao receber mensagem programada).
             # Aqui so marcamos que assinou, para o vigia mover o card. NADA e enviado a ele.

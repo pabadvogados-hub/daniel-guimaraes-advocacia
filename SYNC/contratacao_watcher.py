@@ -89,7 +89,7 @@ DIAS_ATE_LIGACAO = 5
 # VIDEO DO 3o DIA e TAREFA PARA QUEM FECHOU (Advogada, 15/10/2026). Os lembretes seguem como estavam (uma vez
 # por dia, a partir das 7h, todo dia: "manter como esta"). O que muda:
 #   - no 3o DIA UTIL depois do pedido, se o cliente nao mandou NADA, o lembrete daquele dia vira o video
-#     do 3o dia (comercial em giz, aprovado por ela), so para card de motorista;
+#     do 3o dia (desligado nesta operacao: o video era de outro publico; ver _e_motorista);
 #   - a ida para a ligacao continua em 5 dias corridos, mas so em dia util (tarefa nunca cai em fim de
 #     semana nem feriado, regra de 15/10) e nunca no mesmo dia do video, e agora nasce TAREFA URGENTE para
 #     a vendedora que fechou ligar (antes ia so um aviso no WhatsApp da Advogada).
@@ -155,8 +155,8 @@ MSG_LEMBRETE = (
     "chama.")
 # lembretes de 3 em 3 horas, em rodizio (persuasao amigavel, Advogada 12/08)
 LEMBRETES_3H = [
-    "Oi {nome}! Você deu um passo que muitos colegas ainda não tiveram coragem "
-    "de dar: levantou a voz por essa categoria. Parabéns! 🚛\n\n"
+    "Oi {nome}! Você deu um passo importante para proteger a sua produção e a sua "
+    "terra. Agora é com a gente.\n\n"
     "Para o seu caso andar, agora só falta {faltando}.\n\n"
     "Manda foto aqui mesmo pelo WhatsApp que eu já dou o próximo passo na hora.",
     "{nome}, seu processo está quase pronto para avançar! Falta só {faltando}.\n\n"
@@ -270,8 +270,8 @@ def _dias_uteis_desde(quando, hoje=None):
 
 
 def _e_motorista(cid):
-    """O video do 3o dia fala de cabine, patio e holerite: nao se aplica a esta operacao. Quem nao e motorista
-    (operador de betoneira, gestante, madeira) segue com o lembrete de texto."""
+    """O video do 3o dia veio da base e era de outro publico: nao se aplica ao produtor rural.
+    Nome mantido por compatibilidade; aqui sempre devolve False (todo cliente segue com o lembrete de texto)."""
     con = sqlite3.connect(f"file:{DB}?mode=ro", uri=True, timeout=15)
     try:
         r = con.execute("select coalesce(tag,''), coalesce(origem,'') from wa_conversas where id=?",
@@ -281,7 +281,7 @@ def _e_motorista(cid):
     if not r:
         return False
     tag, origem = r[0].upper(), r[1].lower()
-    # o video de 3o dia era de outra operacao; aqui todo reclamante segue com o lembrete de texto
+    # o video de 3o dia era de outra operacao; aqui todo produtor segue com o lembrete de texto
     return False
 
 
@@ -298,10 +298,9 @@ def _veio_da_campanha_gr(cid):
 
 
 def _produto_confirmado(cid):
-    """Lead da campanha do desbloqueio na coluna do trabalhista: o kit so sai depois que a vendedora
-    confirma que ele fechou a ACAO TRABALHISTA, concluindo a tarefa que a ponte do GR abre
-    (gr_contratacao.fase_ponte). Advogada, 21/10/2026: "trocar por pergunta". Antes a ponte movia o card
-    sozinha, e o Saulo (2094), que veio do GR e virou trabalhista, levou o kit do GR."""
+    """Lead de campanha de outro produto parado na coluna do produto principal: o kit so sai depois que a
+    vendedora confirma que ele fechou o caso de PRODUTOR RURAL, concluindo a tarefa de confirmacao de
+    produto (confirma-produto:<id>). Sem a confirmacao, o kit de outro produto poderia sair errado."""
     con = sqlite3.connect(f"file:{DB}?mode=ro", uri=True, timeout=15)
     try:
         r = con.execute("select status from tarefas where origem_ref=? order by id desc limit 1",
@@ -312,13 +311,14 @@ def _produto_confirmado(cid):
 
 
 def _marcar_trabalhista(cid, executar):
-    """Confirmado trabalhista: a etiqueta do card vira RECLAMANTE (painéis e esteira contam certo)."""
+    """Confirmado produtor rural: a etiqueta do card vira PRODUTOR RURAL (painéis e esteira contam certo).
+    Nome da funcao mantido por compatibilidade (o produto principal tem a chave interna 'trabalhista')."""
     if not executar:
         return
     con = sqlite3.connect(DB, timeout=20)
     try:
         con.execute("pragma busy_timeout=8000")
-        con.execute("update wa_conversas set tag='RECLAMANTE' where id=? and coalesce(tag,'')<>'RECLAMANTE'",
+        con.execute("update wa_conversas set tag='PRODUTOR RURAL' where id=? and coalesce(tag,'')<>'PRODUTOR RURAL'",
                     (cid,))
         con.commit()
     finally:
@@ -352,10 +352,10 @@ def _tarefa_para_vendedora(cid, nome, tel, dias, faltam, executar):
              (nome or "Sem nome")[:30], " NEM ".join(FALTA_CURTO[f].upper() for f in faltam) or "OS DOCUMENTOS",
              tel or ""),
          "texto": LQ._limpo(
-             "Ele fechou a ação trabalhista há %d dias e ainda não mandou %s, mesmo com os "
+             "Ele fechou o caso da dívida rural há %d dias e ainda não mandou %s, mesmo com os "
              "lembretes%s. Liga para ele hoje: é a ligação que destrava.\n\nVale a foto da CNH aberta ou o "
-             "arquivo da CNH digital, e o endereço pode ser escrito na conversa, completo e com CEP. A "
-             "carteira de trabalho não trava mais o contrato. A automação parou de cobrar; se o documento "
+             "arquivo da CNH digital, e o endereço pode ser escrito na conversa, completo e com CEP. Se ele "
+             "for casado e houver garantia real, confirme também os dados do cônjuge. A automação parou de cobrar; se o documento "
              "chegar, a esteira retoma sozinha." % (
                  dias, " nem ".join(FALTA_CURTO[f] for f in faltam) or "os documentos",
                  " e o vídeo do 3º dia" if _e_motorista(cid) else ""))}
@@ -984,7 +984,7 @@ def fase_pedido(est, cfg, executar):
         if _veio_da_campanha_gr(cid):
             if not _produto_confirmado(cid):
                 print(f"  [{nome}] veio da campanha do GR: kit SEGURADO até a vendedora confirmar "
-                      f"que é trabalhista (tarefa {REF_CONFIRMA % cid}).")
+                      f"que é produtor rural (tarefa {REF_CONFIRMA % cid}).")
                 continue
             _marcar_trabalhista(cid, executar)
         print(f"  [{nome}] KIT DE BOAS-VINDAS -> " + ("ENVIAR" if executar else "DRY-RUN"))
