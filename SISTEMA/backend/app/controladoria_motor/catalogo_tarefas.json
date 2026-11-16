@@ -1,7 +1,7 @@
 {
  "_meta": {
   "descricao": "Mapa de tratamento por tipo de tarefa do escritorio, para o motor das tarefas.",
-  "versao": "2026-10-05",
+  "versao": "2026-11-16",
   "regra_mae": "O motor prepara e sugere; a conclusao e sempre de uma pessoa da equipe. Excecao (regra de ouro): caso simples e padronizado e peticao de andamento. A automacao assina como Assistente IA.",
   "status": {
    "roda": "Já roda sozinho",
@@ -53,105 +53,141 @@
     "texto": "[ok] no PF, conclusão da tarefa, atualização do cliente, vigia do trânsito, parecer terminativo. O motor sugere pelos autos; a pessoa conclui.",
     "status": "sugere"
    }
-  ]
+  ],
+  "nicho": "Defesa do produtor rural (credito rural, prorrogacao, execucao, busca e apreensao, revisional, RJ). Processo civil (CPC), prazos em dias uteis. Ajustado em 16/11/2026 a partir da base trabalhista; o motor_tarefas.py ainda mapeia algumas skills antigas (ver pendencias do DNA)."
  },
  "tipos": [
   {
    "id": "peticao-inicial",
-   "nome": "Petição inicial (RT do reclamante)",
+   "nome": "Petição inicial do produtor (prorrogação de dívida rural / revisional)",
    "familia": "Peça",
-   "gatilho": "Card do cliente entra em \"Produção da Inicial\" (escritório Produção) com checklist de documentos zerado, Entrevista preenchida e CCT localizada.",
+   "gatilho": "Caso aprovado no parecer de viabilidade, notificação ao banco enviada e sem resposta (ou com recusa), cédulas e laudos (agronômico com ART e de capacidade de pagamento) na pasta.",
    "quem": "Vigia produz pela skill (sem aval) com o parecer da controladoria; Advogada revisa; revisão final da controladoria pela Assistente; Advogada aplica as ressalvas; Dra. Advogada protocolam.",
-   "prazo": "PF_RT no fatal interno definido no fechamento; devolutiva da Advogada no dia útil anterior. Prazo em fim de semana: revisão na segunda, PF na sexta.",
+   "prazo": "Sem prazo processual: data interna definida no fechamento, antes do próximo vencimento das operações ou da data de leilão/execução; tutela de urgência quando houver risco imediato.",
    "entradas": [
-    "Transcrição da reunião de fechamento",
-    "Ficha Entrevista (96 campos)",
-    "Documentos do cliente (CNH, TRCT, holerites, ponto, diários)",
-    "CCT (gate obrigatório)",
-    "Última RT distribuída (benchmark)"
+    "Parecer de viabilidade",
+    "Notificação extrajudicial e resposta do banco",
+    "Cédulas, aditivos e extratos da conta vinculada",
+    "Laudo agronômico (com ART) e laudo de capacidade de pagamento",
+    "Decretos de emergência e dados oficiais do evento adverso",
+    "Documentos do produtor (RG, CPF, IR/LCDPR, CCIR/ITR, inscrição de produtor)"
    ],
    "saidas": [
-    "RT_INICIAL no timbrado",
-    "Memória de cálculo e valor da causa",
-    "PARECER_REVISAO com STATUS",
-    "Sumário de juntada e recortes de prova",
-    "PROJECAO_ACORDO quando o contrato tem menos de 3 meses"
+    "Inicial no timbrado com tutela de urgência",
+    "Quadro das operações e valor da causa",
+    "PARECER_REVISAO com STATUS"
    ],
    "skills": [
-    "peticao-inicial-reclamante",
+    "parecer-viabilidade-produtor",
+    "inicial-prorrogacao-divida-rural",
+    "revisional-cedula-rural",
     "liquidacao-previa",
-    "recorte-de-documentos",
     "revisao-inicial",
     "revisao-controladoria",
     "timbrado"
    ],
    "cadeia": [
-    "Produção pelo vigia",
-    "2. Advogada revisa",
+    "Produção pela Assistente (skill da inicial)",
+    "2. Advogado revisa",
     "3. Revisão final da controladoria (Assistente)",
-    "4. Advogada aplica as ressalvas",
-    "5. PROTOCOLO / distribuição (Dra. Advogada)",
+    "4. Advogado aplica as ressalvas",
+    "5. PROTOCOLO / distribuição",
     "ATUALIZAR CLIENTE",
-    "AUDIÊNCIA INICIAL"
+    "ACOMPANHAR TUTELA DE URGÊNCIA"
    ],
-   "agenda": "Compromisso da devolutiva da Advogada e PF_RT com os cinco convidados.",
+   "agenda": "Compromisso da devolutiva do advogado e data interna de distribuição; vencimento das operações na agenda.",
    "cliente": "Aviso de produção (vigia, uma vez) e aviso de distribuição com os dados do Portal.",
    "motor": [
-    "Coleta de insumos e CCT",
+    "Coleta de insumos (cédulas, laudos, notificação)",
     "Peça inteira e parecer",
-    "Pacote em ATOS INTERNOS",
-    "Tarefas, PF e compromisso (fechamento_inicial.py)",
-    "Tarefa de TENTATIVA DE ACORDO em contrato curto"
+    "Pacote na pasta do caso",
+    "Tarefas, PF e compromisso"
    ],
    "humano": [
-    "Advogada revisa e aplica as ressalvas",
-    "Advogada decide quando a revisão não aprova e assina",
-    "Advogada distribui"
+    "Dr. Daniel decide ajuizar, revisa e assina",
+    "Advogado distribui"
    ],
-   "status": "roda"
+   "status": "construir"
   },
   {
-   "id": "contestacao",
-   "nome": "Esteira da contestação (POP 36, defesa da reclamada)",
+   "id": "notificacao-banco",
+   "nome": "Notificação extrajudicial ao banco (pedido de prorrogação / de cédulas)",
    "familia": "Peça",
-   "gatilho": "A empresa cliente manda a notificação (citação com a inicial) pelo WhatsApp central do escritório (Z-API). Não vem pelo DJEN: o escritório ainda não está nos autos. Processo novo é sempre da Advogada (a Dra. Advogada só segue com a carteira atual).",
-   "quem": "Assistente analisa o processo e monta o pedido de documentos; pessoa confere e dispara; vigia cobra; Assistente organiza os documentos e escreve a v1; Advogada revisa; controladoria (motor) revisa; Dra. Advogada ajusta e protocola. É a esteira da inicial, invertida.",
-   "prazo": "Defesa até a audiência inicial ou una (ou prazo da citação no rito ordinário); interno dois dias úteis antes; cadeia de revisão contada de trás para a frente; pedido de documentos no mesmo dia da notificação.",
+   "gatilho": "Contrato assinado e parecer de viabilidade apontando prorrogação; ou produtor sem as cédulas.",
+   "quem": "Assistente redige pela skill; advogado revisa; Dr. Daniel aprova o envio; advogado envia pelo canal oficial da agência e registra a data.",
+   "prazo": "Antes do próximo vencimento das operações (quanto antes, melhor); vigia da resposta no prazo dado ao banco.",
    "entradas": [
-    "Notificação e inicial recebidas no WhatsApp central",
-    "Autos pelo SYNC (capa, inicial, documentos do reclamante, audiência designada)",
-    "Documentos da reclamada (contrato, ponto, holerites, TRCT, EPI, ASO, PPP, advertências, mensagens)",
-    "CCT ou ACT do cliente",
-    "Versão do cliente (alinhamento humano)"
+    "Parecer de viabilidade",
+    "Quadro das operações",
+    "Laudos (para a versão longa)",
+    "Canal oficial da agência (e-mail/protocolo)"
    ],
    "saidas": [
-    "POP 36: análise do processo com o quadro de pedidos e a lista do que pedir (etapa 1 da skill)",
-    "E-mail de pedido de documentos ao cliente e acompanhamento",
-    "Documentos baixados e organizados na pasta do cliente no Drive",
-    "Diagnóstico probatório pedido a pedido (etapa 2)",
-    "Contestação v1 no timbrado",
-    "Relatório de revisão e peça marcada",
-    "Roteiro de audiência"
+    "Notificação no timbrado",
+    "Comprovante de envio/recebimento",
+    "Tarefa de vigia da resposta"
    ],
    "skills": [
-    "contestacao-reclamada (etapas 1, 2 e 4)",
+    "notificacao-extrajudicial-banco",
     "revisao-integral",
-    "revisao-controladoria",
-    "recorte-de-documentos",
     "timbrado"
    ],
    "cadeia": [
-    "1. Notificação no WhatsApp central abre o caso",
-    "2. POP 36: análise automática do processo e lista de documentos",
-    "3. Pedido de documentos ao cliente (e-mail) e acompanhamento",
-    "4. Vigia: documentos chegaram? se não, pede de novo",
-    "5. Baixar e organizar na pasta do cliente",
-    "6. Contestação v1 pela skill, já passada pela controladoria",
-    "7. Advogada revisa a v1",
-    "8. Revisão final da controladoria (Assistente)",
-    "9. Advogada aplica as ressalvas",
-    "10. PROTOCOLO (Advogada)",
-    "PREPARAÇÃO PARA AUDIÊNCIA"
+    "1. V1 pela Assistente",
+    "2. Advogado revisa",
+    "3. Dr. Daniel aprova",
+    "4. ENVIO e registro",
+    "5. Vigia da resposta",
+    "INICIAL se não houver resposta ou houver recusa"
+   ],
+   "agenda": "Data do envio, prazo de resposta e próximo vencimento das operações.",
+   "cliente": "Aviso do envio e do prazo dado ao banco.",
+   "motor": [
+    "V1 pela skill",
+    "Tarefa de vigia da resposta no prazo"
+   ],
+   "humano": [
+    "Dr. Daniel aprova o envio",
+    "Advogado envia e guarda o comprovante"
+   ],
+   "status": "construir"
+  },
+  {
+   "id": "contestacao",
+   "nome": "Defesa do produtor (contestação, embargos monitórios, busca e apreensão)",
+   "familia": "Peça",
+   "gatilho": "Citação do produtor em ação de cobrança, monitória ou busca e apreensão (DL 911/69), recebida pelo cliente ou lida nos autos.",
+   "quem": "Assistente analisa o processo e a lista de documentos; advogado confere e pede ao cliente; Assistente escreve a v1; advogado revisa; controladoria revisa; Dr. Daniel aprova e protocola.",
+   "prazo": "Contestação: 15 dias úteis da audiência do art. 334 ou da juntada do AR/mandado (arts. 335 e 231 CPC). Busca e apreensão: purga em 5 e resposta em 15 dias da execução da liminar (DL 911/69, art. 3º) [CONFERIR]. Interno: dois dias úteis antes.",
+   "entradas": [
+    "Mandado/carta de citação e inicial do banco",
+    "Autos (capa, liminar, documentos do banco)",
+    "Cédulas, extratos e pagamentos do produtor",
+    "Versão do cliente e dados da safra",
+    "Laudos, se houver"
+   ],
+   "saidas": [
+    "Análise do processo e lista de documentos",
+    "Contestação v1 no timbrado",
+    "Relatório de revisão e peça marcada",
+    "Avaliação de agravo de instrumento contra liminar"
+   ],
+   "skills": [
+    "contestacao-produtor",
+    "agravo-instrumento",
+    "revisao-integral",
+    "revisao-controladoria",
+    "timbrado"
+   ],
+   "cadeia": [
+    "1. Citação abre o caso",
+    "2. Análise do processo e lista de documentos",
+    "3. Pedido de documentos ao cliente",
+    "4. Contestação v1 pela skill, já passada pela controladoria",
+    "5. Advogado revisa a v1",
+    "6. Revisão final da controladoria (Assistente)",
+    "7. Advogado aplica as ressalvas",
+    "8. PROTOCOLO"
    ],
    "agenda": "Audiência com hora (POP 18) e PF da defesa no interno; compromisso de cada etapa.",
    "cliente": "Pedido de documentos por e-mail com cobrança automática; alinhamento da versão (etapa 3 da skill, humana); aviso da audiência.",
@@ -173,22 +209,22 @@
     "Advogada protocola"
    ],
    "status": "construir",
-   "decisao": "Por onde o cliente devolve os documentos (e-mail, WhatsApp central ou link do Drive)? O vigia precisa saber onde olhar. E o remetente de e-mail do escritório precisa ser o Gmail (o módulo atual é do Microsoft 365, desligado em 29/09)."
+   "decisao": "Como o cliente avisa a citação (WhatsApp do escritório, e-mail)? O vigia precisa saber onde olhar; e a busca e apreensão exige reação no mesmo dia."
   },
   {
    "id": "replica",
-   "nome": "Réplica (manifestação sobre a defesa)",
+   "nome": "Réplica (manifestação sobre a contestação do banco)",
    "familia": "Peça",
-   "gatilho": "Intimação \"manifeste-se sobre a defesa/documentos\" (5 dias em regra). A ficha do motor já sugere RÉPLICA; ao aceitar a sugestão, nasce a tarefa da Advogada com o motor da réplica rodando a primeira versão. Quando o prazo é fixado em audiência, vem pelo vigia pós-audiência, com a validação da Advogada.",
+   "gatilho": "Intimação para réplica / manifestação sobre a contestação (15 dias úteis, arts. 350 e 351 CPC). A ficha do motor sugere RÉPLICA.",
    "quem": "Assistente redige a v1 e faz a revisão final da controladoria; Advogada revisa a v1 e aplica as ressalvas; Advogada protocola (Advogada junto em inicial e recurso). Dra. Advogada só na carteira dela.",
-   "prazo": "Prazo do despacho ou da ata; interno fatal menos 2 úteis; cadeia contada de trás para a frente.",
+   "prazo": "15 dias úteis; interno fatal menos 2 úteis; cadeia contada de trás para a frente.",
    "entradas": [
     "Inicial e documentos",
-    "Contestação e índice de documentos do PJe",
-    "Ata, quando o prazo foi fixado em audiência"
+    "Contestação e documentos do banco",
+    "Laudos e cédulas"
    ],
    "saidas": [
-    "Réplica v1 no timbrado (tabela-resumo escritório, impugnação de ponto, jurisprudência da contestação conferida)",
+    "Réplica v1 no timbrado (ponto a ponto, teses do DNA conferidas)",
     "Relatório de revisão e peça marcada",
     "Versão final protocolada"
    ],
@@ -196,7 +232,6 @@
     "replica",
     "revisao-integral",
     "revisao-controladoria",
-    "recorte-de-documentos",
     "timbrado"
    ],
    "cadeia": [
@@ -226,20 +261,20 @@
   },
   {
    "id": "razoes-finais",
-   "nome": "Razões finais por memoriais",
+   "nome": "Alegações finais por memoriais",
    "familia": "Peça",
-   "gatilho": "Encerramento da instrução: o prazo é deferido na ata, não vem pelo DJEN. Depois de toda audiência o vigia lê o processo e a ata e abre a validação da Advogada; validada, a tarefa de razões finais nasce com o prazo e a Assistente monta a cadeia em volta dela.",
+   "gatilho": "Encerramento da instrução com memoriais (art. 364, §2º, CPC): prazo fixado em audiência ou despacho.",
    "quem": "Assistente redige a v1 e faz a revisão final da controladoria; Advogada revisa a v1 e aplica as ressalvas; Advogada protocola (Advogada junto em inicial e recurso). Dra. Advogada só na carteira dela.",
-   "prazo": "O da ata; interno fatal menos 2 úteis; cadeia contada de trás para a frente a partir da tarefa cadastrada.",
+   "prazo": "O fixado (até 15 dias, sucessivos); interno fatal menos 2 úteis.",
    "entradas": [
-    "Ata e transcrição da audiência",
+    "Ata da audiência",
+    "Laudos periciais (agronômico e contábil)",
     "Inicial, réplica e provas",
-    "Depoimentos e confissões"
+    "Depoimentos"
    ],
    "saidas": [
-    "Memoriais no timbrado com citações literais da transcrição",
-    "Ratificação da réplica",
-    "Comparativo transcrição x pedidos"
+    "Memoriais no timbrado com a prova citada por ID",
+    "Comparativo prova x pontos controvertidos"
    ],
    "skills": [
     "razoes-finais",
@@ -271,26 +306,24 @@
     "Advogada decide quando a revisão não aprova"
    ],
    "status": "parcial",
-   "decisao": "A transcrição da audiência hoje é feita no PC, não na VPS: precisa estar na pasta do caso para a Assistente redigir as razões finais."
+   "decisao": "A ata e eventual transcrição da audiência precisam estar na pasta do caso para a Assistente redigir os memoriais."
   },
   {
    "id": "embargos-declaracao",
    "nome": "Embargos de declaração",
    "familia": "Peça",
-   "gatilho": "Sentença ou acórdão publicado (abre junto com RO ou RR): 5 dias úteis, art. 897-A da CLT.",
+   "gatilho": "Sentença, decisão ou acórdão publicado (abre junto com apelação ou recurso especial): 5 dias úteis, arts. 1.022 e 1.023 do CPC.",
    "quem": "Assistente analisa a sentença ou o acórdão, define a estratégia, redige a peça e diz qual estratégia adotou e por quê; Advogada revisa estratégia e peça juntas e aplica as ressalvas; revisão final da controladoria pela Assistente; Advogada protocola (Advogada junto no recurso). Dra. Advogada só na carteira dela.",
-   "prazo": "5 dias úteis; interno fatal menos 2. ED tempestivos interrompem o prazo do recurso, que recomeça do zero depois da decisão.",
+   "prazo": "5 dias úteis; interno fatal menos 2. ED tempestivos interrompem o prazo dos demais recursos (art. 1.026 CPC).",
    "entradas": [
     "Decisão embargada",
-    "Peças suscitantes da instância certa",
-    "Ata e documentos que provam o vício",
-    "Teses vinculantes"
+    "Pedidos e teses que ficaram sem resposta",
+    "Documentos que provam o vício"
    ],
    "saidas": [
-    "Tabela do juízo de cabimento",
     "Mapa de pedidos x dispositivo",
     "ED no timbrado",
-    "E-mail de atualização ao cliente"
+    "Atualização ao cliente"
    ],
    "skills": [
     "embargos-declaracao",
@@ -324,26 +357,25 @@
    "status": "parcial"
   },
   {
-   "id": "recurso-ordinario",
-   "nome": "Recurso ordinário",
+   "id": "apelacao",
+   "nome": "Apelação cível",
    "familia": "Peça",
-   "gatilho": "Sentença publicada (ato RECURSO ORDINÁRIO), 8 dias úteis; com ED, recomeça depois da decisão deles.",
+   "gatilho": "Sentença publicada (ato APELAÇÃO), 15 dias úteis (art. 1.003, §5º, CPC); com ED, recomeça depois da decisão deles.",
    "quem": "Assistente analisa a sentença ou o acórdão, define a estratégia, redige a peça e diz qual estratégia adotou e por quê; Advogada revisa estratégia e peça juntas e aplica as ressalvas; revisão final da controladoria pela Assistente; Advogada protocola (Advogada junto no recurso). Dra. Advogada só na carteira dela.",
-   "prazo": "8 dias úteis; interno fatal menos 2. Reclamada: custas e depósito recursal antes do protocolo, sob pena de deserção.",
+   "prazo": "15 dias úteis; interno fatal menos 2. Preparo e porte de remessa antes do protocolo (art. 1.007), salvo gratuidade.",
    "entradas": [
-    "Sentença (teor pelo DJEN)",
+    "Sentença",
     "ED e decisão dos ED",
-    "Ata e depoimentos",
-    "Inicial, contestação, réplica, razões finais",
-    "RO paradigma do mesmo cliente ou tese"
+    "Laudos e provas",
+    "Inicial, contestação, réplica, memoriais"
    ],
    "saidas": [
-    "RO no timbrado",
-    "Relatório de revisão em 4 partes (DOCX e EDITÁVEL)",
-    "Guias, quando reclamada"
+    "Apelação no timbrado (interposição + razões)",
+    "Relatório de revisão",
+    "Guia de preparo, quando houver"
    ],
    "skills": [
-    "ro-recurso-ordinario",
+    "apelacao-civel",
     "revisao-recursos",
     "revisao-controladoria",
     "timbrado"
@@ -353,14 +385,14 @@
     "2. Advogada revisa a estratégia e a peça juntas: a tarefa chega com a estratégia adotada e o porquê (REFAZER devolve à Assistente; não recorrer vai para a Advogada)",
     "3. Revisão final da controladoria (Assistente, pela skill de revisão)",
     "4. Advogada aplica as ressalvas",
-    "EMITIR GUIA cedo ao cliente (reclamada)",
+    "EMITIR GUIA de preparo cedo ao cliente",
     "5. PROTOCOLO (Advogada): nasce junto com o tratamento da intimação, com PF na agenda",
     "ATUALIZAR CLIENTE"
    ],
-   "agenda": "PF_RO no interno; guia com vencimento na sexta anterior.",
-   "cliente": "Reclamada: valor e vencimento da guia, cedo; todos: atualização depois do protocolo.",
+   "agenda": "PF da apelação no interno; guia com vencimento antes do PF.",
+   "cliente": "Valor do preparo cedo, quando não há gratuidade; atualização depois do protocolo.",
    "motor": [
-    "Análise completa da decisão, estratégia definida e peça redigida numa tacada (ED x recurso, capítulos, risco, custas e depósito)",
+    "Análise completa da decisão, estratégia definida e peça redigida numa tacada (ED x recurso, capítulos, risco, preparo)",
     "A tarefa da Advogada chega com a linha PEÇA, a estratégia adotada, o porquê e os links da peça e da análise",
     "Datas pelo prazo mais curto quando há ED em paralelo; um PF para cada prazo",
     "Cadeia inteira, PF e compromissos no fechamento da conferência",
@@ -377,37 +409,38 @@
    "status": "parcial"
   },
   {
-   "id": "recurso-revista",
-   "nome": "Recurso de revista",
+   "id": "recurso-especial",
+   "nome": "Recurso especial (e extraordinário)",
    "familia": "Peça",
-   "gatilho": "Acórdão do TRT publicado, 8 dias úteis (ED de 5 em paralelo).",
+   "gatilho": "Acórdão do TJ/TRF publicado, 15 dias úteis (ED de 5 em paralelo).",
    "quem": "Assistente analisa a sentença ou o acórdão, define a estratégia, redige a peça e diz qual estratégia adotou e por quê; Advogada revisa estratégia e peça juntas e aplica as ressalvas; revisão final da controladoria pela Assistente; Advogada protocola (Advogada junto no recurso). Dra. Advogada só na carteira dela.",
-   "prazo": "8 dias úteis; depósito complementar até o teto da condenação (Súmula 128, I), valor cheio.",
+   "prazo": "15 dias úteis; preparo do STJ/STF; prequestionamento e cotejo analítico.",
    "entradas": [
     "Acórdão e decisão dos ED",
-    "RO e prequestionamento"
+    "Apelação e prequestionamento"
    ],
    "saidas": [
-    "RR no timbrado (transcendência, cotejo analítico do art. 896, §1º-A)",
-    "Guia complementar"
+    "REsp no timbrado (cabimento, prequestionamento, violação a lei federal ou dissídio)",
+    "Guia de preparo"
    ],
    "skills": [
-    "ro-recurso-ordinario (base)",
-    "embargos-declaracao (prequestionamento)"
+    "apelacao-civel (base)",
+    "embargos-declaracao (prequestionamento)",
+    "revisao-recursos"
    ],
    "cadeia": [
     "1. Assistente analisa a decisão, define a estratégia pelo nosso polo e já redige a peça (skill de ED e do recurso cabível)",
     "2. Advogada revisa a estratégia e a peça juntas: a tarefa chega com a estratégia adotada e o porquê (REFAZER devolve à Assistente; não recorrer vai para a Advogada)",
     "3. Revisão final da controladoria (Assistente, pela skill de revisão)",
     "4. Advogada aplica as ressalvas",
-    "EMITIR GUIA cedo ao cliente (reclamada)",
+    "EMITIR GUIA de preparo",
     "5. PROTOCOLO (Advogada): nasce junto com o tratamento da intimação, com PF na agenda",
     "ATUALIZAR CLIENTE"
    ],
-   "agenda": "PF_RR no interno.",
-   "cliente": "Decisão com o cliente sobre complementar o depósito.",
+   "agenda": "PF do REsp no interno.",
+   "cliente": "Decisão de custo e benefício com o cliente.",
    "motor": [
-    "Análise completa da decisão, estratégia definida e peça redigida numa tacada (ED x recurso, capítulos, risco, custas e depósito)",
+    "Análise completa da decisão, estratégia definida e peça redigida numa tacada (ED x recurso, capítulos, risco, preparo)",
     "A tarefa da Advogada chega com a linha PEÇA, a estratégia adotada, o porquê e os links da peça e da análise",
     "Datas pelo prazo mais curto quando há ED em paralelo; um PF para cada prazo",
     "Cadeia inteira, PF e compromissos no fechamento da conferência",
@@ -422,25 +455,26 @@
     "Advogada decide quando a revisão não aprova"
    ],
    "status": "parcial",
-   "decisao": "Ainda não há skill de redação de RR: até criar, a Advogada produz a etapa 1; o resto da cadeia é o mesmo."
+   "decisao": "Ainda não há skill própria de recurso especial: só com decisão expressa do Dr. Daniel; a apelação serve de base."
   },
   {
    "id": "contrarrazoes",
    "nome": "Contrarrazões e contraminuta",
    "familia": "Peça",
-   "gatilho": "Intimação para contra-arrazoar RO ou RR, ou contraminutar agravo da outra parte: 8 dias úteis. Vale a cópia endereçada ao nosso cliente.",
+   "gatilho": "Intimação para contrarrazoar apelação/REsp do banco ou contraminutar agravo dele: 15 dias úteis. Vale a cópia endereçada ao nosso cliente.",
    "quem": "Assistente redige a v1 e faz a revisão final da controladoria; Advogada revisa a v1 e aplica as ressalvas; Advogada protocola (Advogada junto em inicial e recurso). Dra. Advogada só na carteira dela.",
-   "prazo": "8 dias úteis (art. 895, §1º, c/c 775 da CLT); interno fatal menos 2.",
+   "prazo": "15 dias úteis (arts. 1.010, §1º, e 1.019, II, CPC); interno fatal menos 2.",
    "entradas": [
     "Recurso adverso",
     "Sentença ou acórdão",
     "Nossas peças e provas"
    ],
    "saidas": [
-    "Contrarrazões no timbrado (tempestividade, honorários do art. 85, §11)"
+    "Contrarrazões/contraminuta no timbrado (tempestividade, honorários recursais do art. 85, §11)"
    ],
    "skills": [
-    "contrarrazoes-ro",
+    "contrarrazoes-apelacao",
+    "revisao-recursos",
     "timbrado"
    ],
    "cadeia": [
@@ -469,20 +503,23 @@
   },
   {
    "id": "agravo",
-   "nome": "Agravo (de instrumento, interno, de petição)",
+   "nome": "Agravo (de instrumento e interno)",
    "familia": "Peça",
-   "gatilho": "Seguimento negado ao NOSSO recurso (8 dias úteis). Monocrática no TST: agravo interno. Quando o recurso negado é da outra parte, vira vigia do trânsito.",
+   "gatilho": "Decisão interlocutória contra o produtor (tutela negada, liminar de busca e apreensão, penhora mantida, leilão) ou monocrática do relator: 15 dias úteis.",
    "quem": "Assistente analisa a sentença ou o acórdão, define a estratégia, redige a peça e diz qual estratégia adotou e por quê; Advogada revisa estratégia e peça juntas e aplica as ressalvas; revisão final da controladoria pela Assistente; Advogada protocola (Advogada junto no recurso). Dra. Advogada só na carteira dela.",
-   "prazo": "8 dias úteis; interno fatal menos 2.",
+   "prazo": "15 dias úteis (arts. 1.003, §5º, 1.015 e 1.021 CPC); leilão ou apreensão com data: tratar como urgente, no mesmo dia.",
    "entradas": [
-    "Decisão denegatória",
-    "Recurso e acórdão"
+    "Decisão agravada",
+    "Peças do processo",
+    "Prova do perigo (data do leilão, safra, máquina apreendida)"
    ],
    "saidas": [
-    "Agravo no timbrado"
+    "Agravo de instrumento no timbrado com pedido de tutela recursal"
    ],
    "skills": [
-    "nenhuma própria (RO como base)"
+    "agravo-instrumento",
+    "revisao-recursos",
+    "timbrado"
    ],
    "cadeia": [
     "1. Assistente analisa a decisão, define a estratégia pelo nosso polo e já redige a peça (skill de ED e do recurso cabível)",
@@ -495,7 +532,7 @@
    "agenda": "PF no interno.",
    "cliente": "Decisão de custo e benefício com o cliente.",
    "motor": [
-    "Análise completa da decisão, estratégia definida e peça redigida numa tacada (ED x recurso, capítulos, risco, custas e depósito)",
+    "Análise completa da decisão, estratégia definida e peça redigida numa tacada (ED x recurso, capítulos, risco, preparo)",
     "A tarefa da Advogada chega com a linha PEÇA, a estratégia adotada, o porquê e os links da peça e da análise",
     "Datas pelo prazo mais curto quando há ED em paralelo; um PF para cada prazo",
     "Cadeia inteira, PF e compromissos no fechamento da conferência",
@@ -510,19 +547,19 @@
     "Advogada decide quando a revisão não aprova"
    ],
    "status": "parcial",
-   "decisao": "Ainda não há skill de redação de agravo: até criar, a Advogada produz a etapa 1; o resto da cadeia é o mesmo."
+   "decisao": "Agravo interno ainda sem skill própria: usar a agravo-instrumento como base."
   },
   {
    "id": "manifestacao-laudo",
    "nome": "Manifestação sobre laudo pericial",
    "familia": "Peça",
-   "gatilho": "Laudo juntado com prazo (5 a 15 dias, comum às partes). Quando o prazo sai na ata, vem pelo vigia pós-audiência.",
+   "gatilho": "Laudo pericial juntado (agronômico ou contábil): 15 dias comuns (art. 477, §1º, CPC) ou o prazo do despacho.",
    "quem": "Assistente redige a v1 e faz a revisão final da controladoria; Advogada revisa a v1 e aplica as ressalvas; Advogada protocola (Advogada junto em inicial e recurso). Dra. Advogada só na carteira dela.",
    "prazo": "Prazo do despacho; interno fatal menos 2.",
    "entradas": [
     "Laudo e quesitos",
-    "PGR, LTCAT, PPP, fichas de EPI",
-    "Documentos do cliente"
+    "Laudos de parte (assistente técnico)",
+    "Cédulas, extratos e dados da safra"
    ],
    "saidas": [
     "Manifestação ou impugnação com quesitos complementares"
@@ -594,18 +631,19 @@
    "id": "emenda-inicial",
    "nome": "Emenda à inicial",
    "familia": "Peça",
-   "gatilho": "Despacho determinando a emenda (5 úteis na JT, 15 no cível), sob pena de indeferimento.",
+   "gatilho": "Despacho determinando a emenda (15 dias úteis, art. 321 CPC), sob pena de indeferimento.",
    "quem": "Assistente redige a v1 e faz a revisão final da controladoria; Advogada revisa a v1 e aplica as ressalvas; Advogada protocola (Advogada junto em inicial e recurso). Dra. Advogada só na carteira dela.",
    "prazo": "Prazo do despacho; interno fatal menos 2.",
    "entradas": [
     "Inicial",
-    "Despacho (o que corrigir: valores por pedido, documentos)"
+    "Despacho (o que corrigir: valor da causa, documentos, discriminação do valor incontroverso)"
    ],
    "saidas": [
     "Peça substitutiva"
    ],
    "skills": [
-    "peticao-inicial-reclamante (liquidação por pedido)",
+    "inicial-prorrogacao-divida-rural (base)",
+    "revisao-inicial",
     "timbrado"
    ],
    "cadeia": [
@@ -634,24 +672,24 @@
   },
   {
    "id": "liquidacao",
-   "nome": "Liquidação e cálculos (apresentar, contestar, conferir)",
+   "nome": "Cálculos (excesso de execução, valor incontroverso, liquidação)",
    "familia": "Peça",
-   "gatilho": "Trânsito em julgado (vigia: 8 dias úteis) ou intimação do art. 879, §1º-B (apresentar) e §2º (contestar, sob pena de homologação). Quando os direitos pedem cálculo mais apurado, a primeira tarefa é mandar ao contador.",
-   "quem": "Advogada manda ao contador (calculista Ricardo, pelo histórico) quando o cálculo pede; o financeiro paga os honorários dele; com o cálculo de volta, a Assistente redige a peça e segue o critério único: Advogada revisa, controladoria revisa, Advogada ajusta, Advogada protocola.",
-   "prazo": "8 dias úteis do despacho; interno fatal menos 2. A tarefa do contador nasce para o dia do tratamento, porque o retorno dele é o que mais demora.",
+   "gatilho": "Necessidade de memória de cálculo: embargos à execução (art. 917, §3º), impugnação ao cumprimento (art. 525, §4º), revisional (valor incontroverso), liquidação/cumprimento a favor do produtor.",
+   "quem": "Advogado manda ao contador/perito quando o cálculo pede; com o cálculo de volta, a Assistente redige a peça e segue o critério único: advogado revisa, controladoria revisa, advogado ajusta e protocola.",
+   "prazo": "O da peça a que o cálculo serve; a tarefa do contador nasce no dia do tratamento, porque o retorno dele é o que mais demora.",
    "entradas": [
-    "Decisão transitada",
-    "Holerites, ponto, diários",
-    "Índices do BCB e PJe-Calc",
-    "Planilha do contador, quando houver"
+    "Cédulas e aditivos",
+    "Extratos da conta vinculada e planilha do banco",
+    "Pagamentos do produtor",
+    "Decisão, quando for liquidação"
    ],
    "saidas": [
-    "Planilha e memória no timbrado",
-    "Petição de apresentação ou contestação"
+    "Memória de cálculo no timbrado",
+    "Petição que usa o cálculo"
    ],
    "skills": [
     "liquidacao-previa",
-    "calculo-trabalhista"
+    "embargos-execucao-cedula-rural"
    ],
    "cadeia": [
     "0. ENVIAR AO CONTADOR (Advogada), se o cálculo pedir: nasce junto e segura a redação até o cálculo voltar",
@@ -669,38 +707,43 @@
    "motor": [
     "Tarefa ENVIAR AO CONTADOR já na cadeia, condicional: a pessoa tira no fechamento se o cálculo for simples",
     "Quando a Advogada conclui com o link da planilha, a redação entra na fila com o cálculo do contador",
-    "Cálculo simples: o próprio Assistente liquida (liquidacao-previa)",
+    "Cálculo simples: o próprio Assistente liquida (skill liquidacao-previa)",
     "No vigia do trânsito, a tarefa do contador nasce condicional para o dia do trânsito",
     "Revisão final da controladoria: relatório com status, peça marcada e sugestões",
     "Passagem de etapa a cada conclusão; [ok] no PF e ATUALIZAR CLIENTE depois do protocolo"
    ],
    "humano": [
-    "Advogada decide se vai ao contador e manda",
-    "Financeiro paga o calculista",
-    "Advogada revisa a v1",
-    "Advogada aplica as ressalvas",
-    "Advogada protocola",
-    "Advogada decide quando a revisão não aprova"
+    "Advogado decide se vai ao contador e manda",
+    "Financeiro paga o contador",
+    "Advogado revisa a v1",
+    "Advogado aplica as ressalvas",
+    "Advogado protocola"
    ],
    "status": "parcial",
-   "decisao": "A tarefa do financeiro para pagar o calculista (R$ 300, metade antes, pelo histórico) nasce junto com a do contador? E quando o cliente é empresa, o custo já entra como reembolso a cobrar?"
+   "decisao": "Quem é o contador/perito de confiança do escritório e como ele é pago? [PREENCHER]"
   },
   {
    "id": "impugnacao-execucao",
-   "nome": "Impugnação ao cumprimento e embargos à execução",
+   "nome": "Embargos à execução e impugnação ao cumprimento (produtor executado)",
    "familia": "Peça",
-   "gatilho": "Intimação do executado (nosso polo passivo): 15 dias no cível, 5 na JT com o juízo garantido.",
+   "gatilho": "Citação na execução de cédula rural/CCB/CPR (embargos: 15 dias úteis da juntada do mandado, art. 915) ou intimação no cumprimento de sentença (art. 525).",
    "quem": "Assistente redige a v1 e faz a revisão final da controladoria; Advogada revisa a v1 e aplica as ressalvas; Advogada protocola (Advogada junto em inicial e recurso). Dra. Advogada só na carteira dela.",
-   "prazo": "Tabela; interno fatal menos 2.",
+   "prazo": "Tabela; termo inicial conferido nos autos (juntada do mandado), interno fatal menos 2.",
    "entradas": [
-    "Cálculo adverso e título",
-    "Pagamentos já feitos (caso Dambros)"
+    "Execução e título",
+    "Planilha do banco",
+    "Pagamentos já feitos",
+    "Ação de prorrogação em curso (prejudicialidade)",
+    "Documentos de impenhorabilidade (CCIR, ITR, módulo fiscal)"
    ],
    "saidas": [
-    "Impugnação no timbrado"
+    "Embargos/impugnação no timbrado",
+    "Memória de cálculo do excesso"
    ],
    "skills": [
-    "liquidacao-previa (cálculo comparativo)",
+    "embargos-execucao-cedula-rural",
+    "liquidacao-previa (cálculo do excesso)",
+    "revisao-integral",
     "timbrado"
    ],
    "cadeia": [
@@ -727,7 +770,7 @@
     "Advogada decide quando a revisão não aprova"
    ],
    "status": "parcial",
-   "decisao": "Ainda não há skill de redação de impugnação à execução: até criar, a Advogada produz a etapa 1; o resto da cadeia é o mesmo."
+   "decisao": "Parcelamento do art. 916 (30% + 6 parcelas) só por decisão do Dr. Daniel, porque implica renúncia aos embargos."
   },
   {
    "id": "protocolo",
@@ -796,9 +839,9 @@
   },
   {
    "id": "guias",
-   "nome": "Guias, custas, preparo e depósito recursal",
+   "nome": "Guias, custas e preparo",
    "familia": "Financeiro",
-   "gatilho": "Recurso da reclamada (custas e depósito), custas de diligência, taxa judiciária, pagamento em execução.",
+   "gatilho": "Custas iniciais (ou diferimento), preparo de recurso, custas de diligência, taxa judiciária.",
    "quem": "Advogada valida o valor; Advogada emite e ENVIA cedo ao cliente; Titular paga e lança quando é despesa nossa.",
    "prazo": "Vencimento na sexta (ou último dia útil) antes do fatal interno; valor cheio; comprovante conferido no vencimento.",
    "entradas": [
@@ -806,10 +849,10 @@
     "Contatos do cliente para envio"
    ],
    "saidas": [
-    "Guia e comprovante na pasta (GUIAS RO/RR)"
+    "Guia e comprovante na pasta do caso"
    ],
    "skills": [
-    "nenhuma; régua guia-deposito-recursal-fluxo"
+    "nenhuma"
    ],
    "cadeia": [
     "ACOMPANHAMENTO (Advogada valida)",
@@ -817,10 +860,10 @@
     "Comprovante anotado na tarefa de PROTOCOLO"
    ],
    "agenda": "Vencimento da guia na agenda.",
-   "cliente": "Guia enviada cedo com a mensagem \"só paga se optar pelo recurso\".",
+   "cliente": "Guia enviada cedo ao cliente, com o valor e o vencimento.",
    "motor": [
-    "Calcular o valor (Súmula 128)",
-    "Montar a tarefa dupla e o vencimento",
+    "Calcular o valor pela tabela de custas do tribunal",
+    "Montar a tarefa e o vencimento",
     "Lembrar o cliente em D-3 e no dia"
    ],
    "humano": [
@@ -832,10 +875,10 @@
   },
   {
    "id": "pagamento-execucao",
-   "nome": "Reclamada intimada a pagar (execução)",
+   "nome": "Produtor intimado a pagar (execução ou cumprimento)",
    "familia": "Meio",
-   "gatilho": "Intimação para pagar o saldo devedor sob pena de execução ou penhora, nosso polo passivo.",
-   "quem": "Dra. Advogada negocia e atualiza o cliente, emite as guias e protocola; Advogada decide.",
+   "gatilho": "Citação para pagar em 3 dias (art. 829) ou intimação para pagamento voluntário em 15 dias (art. 523), nosso polo passivo.",
+   "quem": "Advogado atualiza o cliente, avalia defesa, renegociação com o banco ou acordo; Dr. Daniel decide.",
    "prazo": "Prazo do despacho; interno fatal menos 2.",
    "entradas": [
     "Planilha de atualização",
@@ -843,20 +886,20 @@
     "Proposta do cliente"
    ],
    "saidas": [
-    "Acordo, ou parcelamento judicial (30% mais 6 parcelas), ou pagamento"
+    "Defesa (embargos/impugnação), acordo/renegociação, ou pagamento"
    ],
    "skills": [
-    "nenhuma; regra-intimacao-reclamada-acordo-primeiro"
+    "embargos-execucao-cedula-rural",
+    "parecer-viabilidade-produtor"
    ],
    "cadeia": [
     "ATUALIZAR CLIENTE (valor, prazo, opções)",
-    "Proposta colhida com o cliente",
-    "TENTATIVA DE ACORDO (Advogada)",
-    "Plano B: parcelamento com guias",
+    "Análise: embargos x renegociação x acordo",
+    "TENTATIVA DE ACORDO / RENEGOCIAÇÃO",
     "PROTOCOLO"
    ],
    "agenda": "PF do pagamento no interno.",
-   "cliente": "Mensagem que incentiva a trazer proposta, para não bloquear conta nem descapitalizar.",
+   "cliente": "Mensagem que explica as opções sem prometer resultado; nunca deixar o prazo de embargos correr sem decisão.",
    "motor": [
     "Ficha com a cadeia inteira e as quatro tarefas sugeridas (já no motor)"
    ],
@@ -899,9 +942,9 @@
    "id": "implantacao-decisao",
    "nome": "Acompanhar implantação da decisão e vigia do trânsito",
    "familia": "Meio",
-   "gatilho": "Decisão favorável, recurso deles negado, acordo homologado, alvará.",
+   "gatilho": "Decisão favorável (tutela deferida, sentença de prorrogação), recurso do banco negado, acordo homologado, alvará.",
    "quem": "Advogada (Advogada nos dela); Advogada liquida.",
-   "prazo": "Vigia no primeiro dia útil DEPOIS do maior prazo deles (ED 5 e agravo 8); liquidação em 8 dias úteis do trânsito, condicional.",
+   "prazo": "Vigia no primeiro dia útil DEPOIS do maior prazo do banco (ED 5 e recursos 15); cumprimento da tutela conferido com o cliente (negativação baixada, execução suspensa, novo cronograma formalizado no banco).",
    "entradas": [
     "Decisão",
     "Prazos da outra parte",
@@ -909,7 +952,8 @@
    ],
    "saidas": [
     "Certidão de trânsito conferida",
-    "Tarefa de liquidação para a Advogada"
+    "Cumprimento da decisão pelo banco conferido",
+    "Tarefa de cumprimento de sentença quando couber"
    ],
    "skills": [
     "conferencia-publicacoes (vigia do trânsito)"
@@ -1011,10 +1055,10 @@
   },
   {
    "id": "audiencia",
-   "nome": "Audiência (inicial, una, instrução)",
+   "nome": "Audiência (conciliação/mediação do art. 334, instrução)",
    "familia": "Audiência",
    "gatilho": "Designação ou redesignação (ato AUDIÊNCIA DESIGNADA).",
-   "quem": "A Assistente comunica o cliente pelo POP 18; a Advogada fiscaliza (se saiu, se saiu certo, se o cliente deu as devolutivas); a Assistente gera o roteiro e a Advogada estuda; o Titular cobra a audiência dos clientes empresa. Reclamante não paga deslocamento.",
+   "quem": "A Assistente comunica o cliente; o advogado fiscaliza e estuda o roteiro.",
    "prazo": "Comunicação no dia em que a publicação é tratada; fiscalização da Advogada no dia útil seguinte; estudo do roteiro três dias úteis antes; quatro lembretes ao cliente (7 úteis, 3 úteis, véspera, dia); cobrança com vencimento na data da audiência.",
    "entradas": [
     "Notificação (data, hora, modalidade, link, fuso)",
@@ -1057,7 +1101,7 @@
     "Advogada valida as providências que a audiência gerou"
    ],
    "status": "parcial",
-   "decisao": "Os textos do POP 18 (parte 1, parte 2 e passo 3) que a Assistente vai enviar precisam da sua aprovação uma vez. E a cobrança de R$ 500,00 dos clientes empresa vale para toda audiência (inicial, una, instrução, virtual ou presencial)?"
+   "decisao": "Os textos de comunicação ao cliente precisam de aprovação uma vez. Há cobrança de deslocamento para audiência presencial? [PREENCHER]"
   },
   {
    "id": "pauta-julgamento",
@@ -1146,12 +1190,12 @@
    "nome": "Parecer terminativo (POP 14)",
    "familia": "Cliente",
    "gatilho": "Trânsito, acordo homologado ou extinção; alvará ou pagamento final.",
-   "quem": "Assistente monta; revisão humana só se o honorário passa de R$ 15 mil; Advogada confere, revisa e envia; Titular emite o boleto no Asaas.",
+   "quem": "Assistente monta; advogado confere, revisa e envia; financeiro emite o boleto.",
    "prazo": "No fim do processo; lembretes de parcela em D-3 e no dia.",
    "entradas": [
-    "Ata ou termo do acordo (trecho literal, nunca parafraseado)",
-    "Honorário: 12% do valor da causa menos o acordo",
-    "Quem recebe o parecer (quem decide, não o cadastro)"
+    "Sentença/acordo (trecho literal, nunca parafraseado)",
+    "Honorário conforme o contrato do cliente [PREENCHER: regra de êxito do escritório]",
+    "Quem recebe o parecer"
    ],
    "saidas": [
     "Parecer no modelo (Drive)",
@@ -1166,7 +1210,7 @@
    "cadeia": [
     "ACOMPANHAR IMPLANTAÇÃO",
     "PARECER TERMINATIVO",
-    "ATUALIZAR CLIENTE (27%)",
+    "ATUALIZAR CLIENTE",
     "Cobrança"
    ],
    "agenda": "Lembretes das parcelas.",
@@ -1183,9 +1227,9 @@
   },
   {
    "id": "consultoria-pj",
-   "nome": "Consultoria PJ",
+   "nome": "Consultoria ao produtor e à empresa rural",
    "familia": "Cliente",
-   "gatilho": "O cliente empresa manda a dúvida pelo canal central do escritório. Um agente que só conhece a empresa dele colhe o problema, acalma, entende a urgência do retorno e troca a etapa do CRM para \"solicitação de consultoria\".",
+   "gatilho": "O cliente (produtor, empresa rural, cooperativa) manda a dúvida pelo canal central do escritório (renegociação, nova cédula, CPR, garantia, proposta do banco).",
    "quem": "Agente da empresa recebe; a Assistente entende o caso, ativa as instruções da IVA e faz o relatório; Dra. Advogada validam a devolutiva; Advogada é a responsável por dá-la ao cliente.",
    "prazo": "Relatório no dia do pedido (urgente quando o cliente pede retorno para hoje); validação e devolutiva no mesmo dia útil.",
    "entradas": [
@@ -1297,8 +1341,8 @@
    "id": "parceiro",
    "nome": "Intimação de processo de parceiro",
    "familia": "Parceiro",
-   "gatilho": "Publicação em processo de parceiro. Modo \"encaminhar\": Dr. Parceiro Exemplo. Modo \"conjunta\": Dr. Parceiro Dois, Dr. Parceiro Exemplo. Exceção: Dra. Advogada é equipe.",
-   "quem": "A Assistente encaminha a intimação ao parceiro pelo WhatsApp do escritório e acompanha a providência com ele; a Advogada fiscaliza. Dra. Advogada é equipe, não parceira.",
+   "gatilho": "Publicação em processo conduzido com parceiro (lista em advogados_processos.json). [PREENCHER: parceiros do escritório e modo encaminhar/conjunta]",
+   "quem": "A Assistente encaminha a intimação ao parceiro pelo WhatsApp do escritório e acompanha a providência com ele; o advogado fiscaliza.",
    "prazo": "O do ato, para o parceiro.",
    "entradas": [
     "advogados_processos.json"
@@ -1328,7 +1372,7 @@
     "O parceiro pratica o ato"
    ],
    "status": "parcial",
-   "decisao": "Telefone do Dr. Parceiro Exemplo para a Assistente encaminhar: ele não está no cadastro de parceiros do Sistema. E os textos de encaminhamento e de cobrança ao parceiro precisam da sua aprovação uma vez."
+   "decisao": "Telefone e modo de cada parceiro precisam estar no cadastro de parceiros do Sistema. E os textos de encaminhamento e de cobrança ao parceiro precisam de aprovação uma vez."
   },
   {
    "id": "contratacao",
@@ -1338,7 +1382,7 @@
    "quem": "Vigias (kit de 8 mensagens, cobrança de documentos, ZapSign, provas); Advogada na ligação de fechamento; comercial.",
    "prazo": "Toques automáticos com teto de 3 por minuto; 5 toques e alerta.",
    "entradas": [
-    "Conversa, CNH, endereço, Entrevista"
+    "Conversa, documentos do produtor, cédulas, parecer de viabilidade"
    ],
    "saidas": [
     "Contrato assinado",
@@ -1346,13 +1390,14 @@
     "Card em Produção"
    ],
    "skills": [
-    "comercial-jusmoto"
+    "parecer-viabilidade-produtor"
    ],
    "cadeia": [
     "Fechou",
     "Kit",
     "Assinatura",
     "Documentos",
+    "Notificação ao banco",
     "Produção da inicial"
    ],
    "agenda": "Nenhuma.",
@@ -1377,7 +1422,7 @@
     "Tarefa de retorno"
    ],
    "skills": [
-    "comercial-jusmoto"
+    "nenhuma"
    ],
    "cadeia": [
     "Ligação",
@@ -1393,7 +1438,7 @@
     "O retorno e a baixa"
    ],
    "status": "parcial",
-   "decisao": "As 29 tarefas pós-ligação abertas no módulo Tarefas não têm dono: definir o responsável e a baixa."
+   "decisao": "Definir o responsável e a baixa das tarefas pós-ligação."
   }
  ]
 }

@@ -2,7 +2,7 @@
 """VIGIA DA ASSINATURA TRAVADA (Advogada, 23/10/2026: "pode construir sim o vigia de assinatura travada").
 
 A esteira conta DIAS. Ela nao ve o cliente batendo na porta. O Quirino abriu o contrato dele treze
-vezes, o Ivo doze, o Leopoldo quinze, e ninguem soube. Pior: os documentos corrigidos do Valdo
+vezes, o Ivo doze, o Leopoldo quinze, e ninguem soube. Pior: os documentos corrigidos do cliente D
 e dois dos tres do Ivo nasceram SEM TELEFONE no ZapSign, ou seja, nunca houve como avisar essas
 pessoas, e elas ficaram meses paradas enquanto a regua mandava lembrete de uma assinatura que era
 impossivel fazer.
@@ -229,7 +229,7 @@ def marcar_fila_assinou(caso, card, aplicar):
     contratacao le para mover o card. So a marca: nada e enviado ao cliente.
 
     Por que isso existe (26/10/2026): a fila confere o ZapSign as 8h, as 13h e as 19h. Quem assina
-    no meio da tarde fica parado ate a rodada seguinte. O Valdo Sarmento assinou os tres
+    no meio da tarde fica parado ate a rodada seguinte. O cliente D assinou os tres
     documentos as 14h34, depois de o vigia ter trocado a assinatura dele para codigo pelo WhatsApp,
     e o card continuou em "Contrato no ZapSign" porque a fila ainda nao sabia. Marcando aqui, o
     vigia da contratacao move o card na proxima meia hora.
@@ -392,7 +392,7 @@ def inscrever_na_fila_de_documentos(cid):
     """Card que chega em Aguardando Documentos PRECISA estar na fila: e por ela que a
     varredura acha o cliente, guarda os arquivos na pasta e anda o card. Quando quem move
     e este vigia, a fase_assinado da esteira nao roda, e sem isto o cliente fica invisivel
-    (Valdo Sarmento, 26/10/2026: 12 fotos sem classificar e card parado)."""
+    (cliente D, 26/10/2026: 12 fotos sem classificar e card parado)."""
     try:
         con = _con()
         r = con.execute('select coalesce(contato_nome,""), coalesce(contato_telefone,"") '
@@ -518,7 +518,7 @@ def main():
                     continue
                 pendentes.append((tk, j, s))
                 # o nome de verdade esta no signatario, nao no card: o perfil de WhatsApp do
-                # Valdo e "valdosarmento451" e o do Ivo Quaresma e "empresa". Chamar o cliente
+                # cliente D e "usuario123" e o do cliente G e "empresa". Chamar o cliente
                 # pelo apelido do perfil e o erro que ja saiu uma vez hoje.
                 nome_real = nome_real or (s.get('name') or '')
 
@@ -543,7 +543,7 @@ def main():
             # ANDA SOZINHO (Advogada, 26/10/2026: "varrer com menos tempo e mover os cards"): assinou
             # tudo e o lugar dele e "Assinado". Marca a fila, que e o que o vigia da contratacao
             # le, move o card e faz a travessia para a producao na hora, em vez de deixar o
-            # cliente esperando a rodada de meia em meia hora. O Valdo Sarmento assinou as 14h34
+            # cliente esperando a rodada de meia em meia hora. O cliente D assinou as 14h34
             # e o card dele ficaria parado ate as 19h.
             if card['pipe'] == PIPE_TRAB and (fantasma or card['etapa'] == COL_ZAPSIGN):
                 achados += 1

@@ -84,7 +84,7 @@ FIG_TIPO = "sticker"
 FIGURINHAS = {1: "", 2: "", 3: "", 4: "", 5: ""}
 
 # Checklist padrao (caso trabalhista comum). Editavel por cliente no enroll (--checklist).
-# REGRA DA PAM (11/09/2026): extrato bancario NAO entra na cobranca
+# REGRA DA EQUIPE (11/09/2026): extrato bancario NAO entra na cobranca
 # automatica. Cliente tem MEDO DE GOLPE quando pedem extrato pelo WhatsApp; na fase
 # pre-processual confiamos no relato e a equipe pede o extrato PESSOALMENTE
 # na fase seguinte.
@@ -348,7 +348,7 @@ def processar():
             print(f"[{nome}] encerrado. skip.")
             continue
 
-        # INICIAL JA PRONTA (Titular, 29/09/2026: "o Heitor Valença pode parar de cobrar, ja
+        # INICIAL JA PRONTA (Titular, 29/09/2026: "o cliente A pode parar de cobrar, ja
         # finalizamos a inicial dele"): card na Producao em Revisao, Distribuicao ou Distribuida
         # = documento nao faz mais falta. Encerra e nao manda nada.
         if _inicial_pronta(c.get("telefone")):

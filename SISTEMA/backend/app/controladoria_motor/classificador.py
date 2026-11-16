@@ -428,6 +428,13 @@ def classificar(intimacao: dict, titularidade: dict | None = None) -> dict:
             avisos.append('Texto cita %s dias, mas o ato e de ciencia: o prazo e de outra parte ou de outro ato' % dias_despacho)
     else:  # despacho
         dias = dias_despacho
+        # Prazo supletivo (civel, 16/11/2026): despacho sem prazo e ato com prazo legal de reserva
+        # no catalogo (`dias_supletivo`): art. 218, 3o CPC (5 dias), emenda 15 (art. 321), laudo 15
+        # (art. 477, 1o). So entra quando nem o texto nem o SYNC trouxeram o prazo; sempre com aviso.
+        if dias is None and cfg.get('dias_supletivo') and not sigiloso:
+            dias = int(cfg['dias_supletivo'])
+            avisos.append('Prazo nao lido no texto: aplicado o prazo supletivo de %d dias uteis (%s) — conferir'
+                          % (dias, cfg.get('base_legal', '-')))
         if dias is None and not sigiloso:
             avisos.append('Prazo vem do despacho e nao foi encontrado no texto — conferir')
 
@@ -614,4 +621,28 @@ if __name__ == '__main__':   # bateria rapida: python -m app.controladoria_motor
     ok += bom2
     casos.append(('audiencia passada nao e compromisso', '', None))
     print('%s  %-28s -> audiencia=%s' % ('OK  ' if bom2 else 'FALHA', 'audiencia passada', r2.get('audiencia')))
+    # civel / agro (16/11/2026): prazos do CPC e prazo supletivo do art. 218, 3o
+    civeis = (
+        ('civel: manifeste-se sem prazo -> 5 (art. 218 3o)', 'Manifeste-se a parte autora sobre a peticao do banco.',
+         'MANIFESTACAO GENERICA', 5, None),
+        ('civel: contraminuta ao agravo -> 15', 'Intime-se o agravado para responder, nos termos do art. 1.019, II do CPC.',
+         'CONTRARRAZOES DE AGRAVO DE INSTRUMENTO', 15, None),
+        ('civel: sentenca -> apelacao 15 + ED 5', 'SENTENCA. Julgo procedente o pedido para declarar o direito a prorrogacao da divida rural.',
+         'APELACAO', 15, 5),
+        ('civel: leilao designado', 'Designo o primeiro leilao do imovel penhorado para 10/12/2026, por meio do leiloeiro oficial.',
+         'LEILAO / HASTA PUBLICA', None, None),
+        ('civel: laudo sem prazo -> 15 (art. 477)', 'Juntado o laudo pericial agronomico, manifestem-se as partes sobre o laudo.',
+         'MANIFESTACAO SOBRE LAUDO PERICIAL', 15, None),
+    )
+    for nome, texto, ato_esp, dias_esp, ed_esp in civeis:
+        r = classificar({'processo': '0000000-00.2026.8.00.0000', 'tribunal': 'TJMG', 'texto': texto,
+                         'data': '2026-11-16T03:00:00+00:00'})
+        princ = [p for p in r['prazos'] if not p.get('paralelo')]
+        par_ed = [p for p in r['prazos'] if p.get('paralelo') and p.get('ato') == 'EMBARGOS DE DECLARACAO']
+        bom = (r['ato'] == ato_esp and (princ[0].get('dias') if princ else None) == dias_esp
+               and ((par_ed[0].get('dias') if par_ed else None) == ed_esp))
+        ok += bom
+        casos.append((nome, texto, ato_esp))
+        print('%s  %-28s -> %s %s' % ('OK  ' if bom else 'FALHA', nome, r['ato'],
+                                      [(p.get('ato'), p.get('dias')) for p in r['prazos']]))
     print('\n%d/%d' % (ok, len(casos)))

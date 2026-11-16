@@ -931,7 +931,7 @@ def _nota(cid, texto, executar):
 def _ja_tem_contrato(c):
     """Card que ja gerou contrato (intake ok) e voltou para 'Fechou!'. O vigia
     nao pede documento de novo nem gera um segundo contrato: foi movido por
-    gente, entao gente decide (caso Teodoro Lins, 25/09)."""
+    gente, entao gente decide (caso Fulano Lins, 25/09)."""
     return (c or {}).get("intake") == "ok"
 
 
@@ -1001,7 +1001,7 @@ def fase_recepcao(est, cfg, executar):
     Toda rodada comeca lendo a conversa: o que o cliente ja mandou, o que aquilo
     e e se DA PARA LER. So depois disso a esteira decide se pede, se cobra ou se
     avanca. Antes o robo classificava o TIPO do arquivo e nunca olhava se ele
-    estava legivel - foi assim que a CNH ilegivel do Heitor Valença passou e o
+    estava legivel - foi assim que a CNH ilegivel do cliente A passou e o
     contrato CT. 100/2026 saiu assinado com CPF e RG em branco.
 
     A leitura e por CONVERSA e por MIDIA: o que ja foi lido numa rodada nao volta
@@ -1132,7 +1132,7 @@ def fase_recepcao(est, cfg, executar):
         faltam = aval["faltando"]
 
         # ---- chegou arquivo que a visao nao reconheceu: responde assim mesmo ----
-        # Advogada, 26/10/2026: o Heitor mandou 8 papeis do acerto e a esteira ficou calada,
+        # Advogada, 26/10/2026: o cliente A mandou 8 papeis do acerto e a esteira ficou calada,
         # porque o aviso do que falta so saia quando algum documento era reconhecido.
         if retrato["lidas_agora"] and not retrato["documentos"]:
             if (c.get("aviso_outros") or "") != _hoje():
@@ -1429,7 +1429,7 @@ def _garantir_fila_documentos(cid, nome, tel, fila_assinatura, executar):
     """Todo card que chega em Aguardando Documentos precisa estar na fila da cobranca de
     documentos: e por ela que a varredura de provas acha o cliente, guarda os arquivos na
     pasta e anda o card. A porta normal e a cobranca de assinatura (ao ver a assinatura),
-    mas ela pula quem esta encerrado: o Jonathan Garcia (automaticas desligadas, contrato a
+    mas ela pula quem esta encerrado: o cliente E (automaticas desligadas, contrato a
     mao) assinou em 07/10/2026 e ficou fora da varredura (achado de 08/10). Cliente ainda
     ativo na cobranca de assinatura fica com ela, que inscreve na proxima rodada (senao
     duplicaria); sem entrada ou com entrada encerrada, inscreve aqui. Automaticas desligadas

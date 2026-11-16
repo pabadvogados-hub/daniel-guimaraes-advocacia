@@ -1,0 +1,64 @@
+---
+name: revisional-cedula-rural
+description: "Redige ação revisional de cédula de crédito rural (ou CCB de destinação rural) autônoma: juros remuneratórios, encargos de mora, capitalização, seguros/venda casada, repetição do indébito e descaracterização da mora."
+---
+
+# revisional-cedula-rural
+
+Use quando o foco é o custo da dívida, não a prorrogação (se houver frustração de safra, prefira
+a `inicial-prorrogacao-divida-rural` c/c revisão).
+
+Antes de redigir, exija o **parecer contábil** (taxa contratada x limite; juros de mora aplicados;
+capitalização efetiva; seguros, tarifas e IOF financiados; recálculo do saldo). Sem parecer, a
+peça sai com `[PREENCHER: parecer contábil]` e não vai a protocolo.
+
+Estrutura:
+1. endereçamento, qualificação, título `AÇÃO REVISIONAL DE CÉDULA DE CRÉDITO RURAL C/C REPETIÇÃO
+   DE INDÉBITO E PEDIDO DE TUTELA DE URGÊNCIA`, "em face de";
+2. DOS FATOS: cada operação (DNA 2) com taxa contratada, encargos de mora, seguros e saldo;
+3. DA NATUREZA RURAL DO CRÉDITO (se CCB/CPR: destinação, DNA 6.1);
+4. DOS JUROS REMUNERATÓRIOS: DL 167/67, art. 5º (taxa fixada pelo CMN) e limite de 12% a.a. na
+   omissão do CMN (DNA 6.2, [CONFERIR PRECEDENTE]);
+5. DOS ENCARGOS DE MORA: DL 167/67, art. 5º, p.u. (1% a.a.); vedação de comissão de permanência e
+   "taxa de inadimplência" cumuladas;
+6. DA CAPITALIZAÇÃO: só se o parecer mostrar falta de pactuação clara (Súmula 93/STJ é contra a
+   tese ampla — DNA 6.2);
+7. DOS SEGUROS E TÍTULOS IMPOSTOS: Tema 972/STJ se houver relação de consumo (DNA 6.4 e 6.5);
+8. DA DESCARACTERIZAÇÃO DA MORA (REsp 1.061.530/RS, Orientação 2 — DNA 6.2);
+9. DA REPETIÇÃO/COMPENSAÇÃO DO INDÉBITO (simples, salvo má-fé comprovada [CONFERIR]);
+10. DA TUTELA DE URGÊNCIA: depósito/consignação do valor incontroverso, não negativação enquanto
+    se discute o débito;
+11. DOS PEDIDOS, exibição dos documentos, perícia contábil, intimação exclusiva, valor da causa
+    (proveito econômico pretendido ou valor do contrato [CONFERIR critério]).
+- Na revisional de contrato bancário a lei processual exige discriminar as obrigações
+  controvertidas e o valor incontroverso (art. 330, §§ 2º e 3º, do CPC) [CONFERIR]: o parecer
+  supre isso.
+- Sempre `STATUS: AGUARDA REVISÃO DO DR. DANIEL`.
+
+## Antes de escrever
+1. Leia INTEIRO o `SISTEMA/backend/app/juridico/DNA_ESCRITORIO.md` (na raiz do repositório do sistema; no servidor, `$ESC_RAIZ/SISTEMA/backend/app/juridico/DNA_ESCRITORIO.md`).
+   Ele define a justiça e o endereçamento (Estadual x Federal), a abertura ("por seus advogados"),
+   os títulos DA/DO, as teses conferidas (seção 6), o fecho ("Termos em que, pede deferimento."),
+   a cidade e data e o bloco de assinatura. A formatação dele é PROVISÓRIA: siga-a mesmo assim.
+2. Leia todos os insumos da pasta do caso: cédulas e aditivos, extratos da conta vinculada,
+   notificações e respostas do banco, laudos (agronômico e de capacidade de pagamento), autos,
+   decisão e peça contrária. Imagem e PDF escaneado se leem por visão.
+
+## Regras inegociáveis
+- Nunca invente jurisprudência. Só cite o que está no DNA como [CONFERIDO] ou nos autos; o resto
+  vira `[CONFERIR PRECEDENTE]`. Nunca crie número de processo, relator, data ou ementa.
+- Nunca invente dado do cliente, da cédula ou do processo (nº da operação, taxa, saldo,
+  vencimento, área, produção). O que faltar vira `[PREENCHER: campo]`.
+- Norma do CMN/MCR só com a redação conferida e vigente na data relevante; na dúvida,
+  `[CONFERIR redação do MCR]` (atenção à Res. CMN 5.314/2026, DNA 6.1).
+- Valores sempre com "R$" e conferidos (a soma das operações tem de bater com o valor indicado).
+- Prazos processuais em dias úteis (art. 219 do CPC).
+- Rebata a peça contrária ponto a ponto: o que ela diz e por que não se sustenta.
+- Regra de ouro (DNA, seção 7): só petição de andamento e caso simples saem direto. O resto
+  termina com `STATUS: AGUARDA REVISÃO DO DR. DANIEL`.
+
+## Entrega
+- Monte o .docx no timbrado com a skill `timbrado`:
+  `python .claude/skills/timbrado/montar_peca.py --texto saida/PECA.txt --saida "saida/<NOME>.docx"`
+- Registre em `saida/RESUMO.txt`, em até 5 linhas, a peça, as teses usadas, os prazos e os pontos
+  que pedem conferência ([PREENCHER] e [CONFERIR] que ficaram abertos).

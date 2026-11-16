@@ -11,8 +11,10 @@
    "titularidade_padrao": "NOSSO quando a decisao publicada abre prazo nosso (atos recursais)",
    "abre_junto": "atos com prazo paralelo (ex.: sentenca abre ED e recurso)",
    "gatilhos": "pistas de texto (nao decisao) para o classificador",
-   "titularidade_polo": "ativo | passivo: o ato so existe para esse polo (emenda e do autor; contestacao, pagamento e impugnacao sao do reu). Com o polo conhecido, decide a titularidade sozinho."
-  }
+   "titularidade_polo": "ativo | passivo: o ato so existe para esse polo (emenda e do autor; contestacao, pagamento e impugnacao sao do reu). Com o polo conhecido, decide a titularidade sozinho.",
+   "dias_supletivo": "inteiro opcional, so com fonte_prazo=despacho: prazo legal de reserva quando o despacho nao traz prazo (ex.: 5 dias do art. 218, 3o CPC). Entra com aviso de conferencia."
+  },
+  "nicho": "Escritorio de defesa do PRODUTOR RURAL (civel/CPC; Justica Estadual e, com CEF/BNDES/Uniao, Federal). O ramo 'civel' e o que vale; o 'trabalhista' ficou da base e so e usado se aparecer publicacao de TRT. Ajuste de 16/11/2026: prazos do CPC em dias uteis (art. 219)."
  },
  "trabalhista": {
   "EMBARGOS DE DECLARACAO": {
@@ -579,7 +581,7 @@
    "contagem": "uteis",
    "fonte_prazo": "tabela",
    "fatal": false,
-   "base_legal": "art. 1.023 CPC",
+   "base_legal": "arts. 1.022 e 1.023 CPC (5 dias uteis)",
    "titularidade_padrao": "NOSSO",
    "gatilhos": [
     "embargos de declaracao",
@@ -587,7 +589,8 @@
     "contradicao",
     "obscuridade",
     "erro material"
-   ]
+   ],
+   "observacao": "Interrompem o prazo dos demais recursos (art. 1.026)."
   },
   "MANIFESTACAO SOBRE ED": {
    "trilha": "PECA",
@@ -595,7 +598,7 @@
    "contagem": "uteis",
    "fonte_prazo": "despacho",
    "fatal": false,
-   "base_legal": "art. 1.023, 2o CPC",
+   "base_legal": "art. 1.023, 2o CPC (5 dias)",
    "gatilhos": [
     "manifestacao sobre os embargos",
     "manifestar sobre os embargos",
@@ -610,7 +613,8 @@
     "embargadas para se manifestarem",
     "embargados para se manifestarem",
     "querendo, apresentar manifestacao"
-   ]
+   ],
+   "dias_supletivo": 5
   },
   "CONTESTACAO": {
    "trilha": "PECA",
@@ -624,9 +628,15 @@
     "citacao",
     "apresentar contestacao",
     "prazo para defesa",
-    "cite-se"
+    "cite-se",
+    "apresentar resposta",
+    "oferecer contestacao",
+    "art. 335",
+    "acao monitoria",
+    "embargos monitorios"
    ],
-   "titularidade_polo": "passivo"
+   "titularidade_polo": "passivo",
+   "observacao": "Termo inicial NAO e a publicacao: 15 dias uteis da audiencia de conciliacao/mediacao sem acordo ou da juntada do AR/mandado cumprido (arts. 335 e 231 CPC). Conferir nos autos e corrigir o vencimento. Monitoria: embargos monitorios em 15 dias (art. 702)."
   },
   "EMENDA A INICIAL": {
    "trilha": "PECA",
@@ -634,7 +644,7 @@
    "contagem": "uteis",
    "fonte_prazo": "despacho",
    "fatal": true,
-   "base_legal": "art. 321 CPC",
+   "base_legal": "art. 321 CPC (15 dias)",
    "gatilhos": [
     "emende a peticao inicial",
     "emenda a inicial",
@@ -645,7 +655,8 @@
     "art. 321"
    ],
    "observacao": "Prazo do despacho (15 dias por lei), sob pena de indeferimento.",
-   "titularidade_polo": "ativo"
+   "titularidade_polo": "ativo",
+   "dias_supletivo": 15
   },
   "REPLICA": {
    "trilha": "PECA",
@@ -653,7 +664,7 @@
    "contagem": "uteis",
    "fonte_prazo": "tabela",
    "fatal": false,
-   "base_legal": "arts. 350 e 351 CPC",
+   "base_legal": "arts. 350 e 351 CPC (15 dias uteis)",
    "gatilhos": [
     "replica",
     "manifeste-se sobre a contestacao",
@@ -667,7 +678,7 @@
    "contagem": "uteis",
    "fonte_prazo": "despacho",
    "fatal": false,
-   "base_legal": "art. 357 CPC",
+   "base_legal": "art. 357 CPC; art. 218, 3o CPC (supletivo 5 dias)",
    "gatilhos": [
     "especifiquem as provas",
     "especificando-as",
@@ -678,7 +689,8 @@
     "interesse na tentativa de conciliacao",
     "justificando sua pertinencia"
    ],
-   "observacao": "Prazo comum. Decidir com a Dra. Advogada testemunhas e posicao sobre conciliacao (caso cliente empresa x BR Brasil Trucks)."
+   "observacao": "Prazo comum. Decidir com o advogado do caso as provas (pericia agronomica e contabil, testemunhas) e a posicao sobre conciliacao.",
+   "dias_supletivo": 5
   },
   "APELACAO": {
    "trilha": "PECA",
@@ -686,7 +698,7 @@
    "contagem": "uteis",
    "fonte_prazo": "tabela",
    "fatal": true,
-   "base_legal": "art. 1.003, 5o CPC",
+   "base_legal": "arts. 1.009 e 1.003, 5o CPC (15 dias uteis)",
    "titularidade_padrao": "NOSSO",
    "gatilhos": [
     "sentenca",
@@ -702,11 +714,15 @@
    "contagem": "uteis",
    "fonte_prazo": "tabela",
    "fatal": true,
-   "base_legal": "art. 1.010, 1o CPC",
+   "base_legal": "art. 1.010, 1o CPC (15 dias uteis)",
    "gatilhos": [
     "contrarrazoes de apelacao",
     "apelacao interposta",
-    "para contrarrazoar"
+    "para contrarrazoar",
+    "apelado para contrarrazoes",
+    "intime-se o apelado",
+    "apresentar contrarrazoes",
+    "contrarrazoes ao recurso de apelacao"
    ],
    "titularidade_padrao": "NOSSO"
   },
@@ -716,7 +732,7 @@
    "contagem": "uteis",
    "fonte_prazo": "tabela",
    "fatal": true,
-   "base_legal": "art. 1.003, 5o CPC",
+   "base_legal": "arts. 1.015 e 1.003, 5o CPC (15 dias uteis)",
    "titularidade_padrao": "NOSSO",
    "gatilhos": [
     "decisao interlocutoria",
@@ -724,8 +740,14 @@
     "indeferi a tutela",
     "defiro em parte a liminar",
     "indefiro a tutela",
-    "indefiro o pedido de tutela"
-   ]
+    "indefiro o pedido de tutela",
+    "indefiro a liminar",
+    "indefiro o pedido liminar",
+    "indefiro a antecipacao",
+    "rejeito a impenhorabilidade",
+    "mantenho a penhora"
+   ],
+   "observacao": "Agro: tutela negada para suspender execucao, leilao, busca e apreensao ou negativacao; decisao que rejeita impenhorabilidade. Na execucao toda interlocutoria e agravavel (art. 1.015, p.u.)."
   },
   "RECURSO ESPECIAL / EXTRAORDINARIO": {
    "trilha": "PECA",
@@ -733,7 +755,7 @@
    "contagem": "uteis",
    "fonte_prazo": "tabela",
    "fatal": true,
-   "base_legal": "art. 1.003, 5o CPC",
+   "base_legal": "arts. 1.029 e 1.003, 5o CPC (15 dias uteis)",
    "titularidade_padrao": "NOSSO",
    "gatilhos": [
     "acordao",
@@ -741,7 +763,8 @@
     "recurso extraordinario",
     "camara de direito",
     "negaram provimento"
-   ]
+   ],
+   "observacao": "Acordao do TJ/TRF: REsp/RE em 15 dias com ED de 5 em paralelo. So por decisao do advogado."
   },
   "CONTRARRAZOES DE RESP / RE": {
    "trilha": "PECA",
@@ -786,7 +809,8 @@
     "garantido o juizo",
     "impugnar o cumprimento"
    ],
-   "titularidade_polo": "passivo"
+   "titularidade_polo": "passivo",
+   "observacao": "15 dias uteis apos o fim do prazo de pagamento voluntario do art. 523 (art. 525 CPC)."
   },
   "BLOQUEIO SISBAJUD": {
    "trilha": "MEIO",
@@ -814,13 +838,20 @@
    "contagem": "uteis",
    "fonte_prazo": "tabela",
    "fatal": true,
-   "base_legal": "art. 915 CPC",
+   "base_legal": "arts. 914 e 915 CPC (15 dias uteis da juntada do mandado de citacao)",
    "gatilhos": [
     "embargos a execucao",
     "titulo executivo extrajudicial",
-    "para opor embargos"
+    "para opor embargos",
+    "cite-se o executado",
+    "citacao do executado",
+    "pagar no prazo de 3",
+    "pagamento em 3 (tres) dias",
+    "art. 829",
+    "art. 915"
    ],
-   "titularidade_polo": "passivo"
+   "titularidade_polo": "passivo",
+   "observacao": "Termo inicial NAO e a publicacao: juntada do mandado de citacao cumprido (art. 915 c/c 231, II). Pagar em 3 dias da citacao (art. 829); parcelamento do art. 916 (30% + ate 6 parcelas) so por decisao do advogado, porque implica renuncia aos embargos. Agro: prorrogacao, excesso (juros de mora 1% a.a., DL 167/67 art. 5o p.u.), impenhorabilidade da pequena propriedade rural."
   },
   "CUSTAS E DESPESAS": {
    "trilha": "MEIO",
@@ -864,7 +895,7 @@
    "contagem": "uteis",
    "fonte_prazo": "despacho",
    "fatal": false,
-   "base_legal": "-",
+   "base_legal": "art. 218, 3o CPC (sem prazo no despacho: 5 dias)",
    "gatilhos": [
     "manifeste-se",
     "diga sobre",
@@ -872,7 +903,8 @@
     "sobre os documentos",
     "regularizar sua representacao",
     "regularize a representacao"
-   ]
+   ],
+   "dias_supletivo": 5
   },
   "PROCESSO SIGILOSO": {
    "trilha": "MEIO",
@@ -946,9 +978,245 @@
     "designa-se para o dia",
     "designada para o dia",
     "audiencia de julgamento",
-    "audiencia inaugural"
+    "audiencia inaugural",
+    "designo audiencia",
+    "audiencia de conciliacao",
+    "audiencia de mediacao",
+    "art. 334",
+    "cejusc",
+    "audiencia de instrucao",
+    "audiencia de instrucao e julgamento",
+    "sessao de conciliacao",
+    "sessao de mediacao"
    ],
-   "observacao": "Nunca fecha sozinha: vai para a agenda (POP 18). Copia da parte contraria e so duplicata."
+   "observacao": "Nunca fecha sozinha: vai para a agenda. Audiencia do art. 334 abre o prazo da contestacao (art. 335, I) se nao houver acordo. Copia da parte contraria e so duplicata."
+  },
+  "CONTRARRAZOES DE AGRAVO DE INSTRUMENTO": {
+   "trilha": "PECA",
+   "dias": 15,
+   "contagem": "uteis",
+   "fonte_prazo": "tabela",
+   "fatal": true,
+   "base_legal": "art. 1.019, II CPC (15 dias uteis)",
+   "titularidade_padrao": "NOSSO",
+   "gatilhos": [
+    "contraminuta",
+    "contraminutar",
+    "agravado para responder",
+    "intime-se o agravado",
+    "intime-se a parte agravada",
+    "parte agravada para",
+    "art. 1.019, ii",
+    "resposta ao agravo",
+    "contrarrazoes ao agravo"
+   ],
+   "observacao": "Banco agravou (ex.: contra tutela que suspendeu a execucao): defender a decisao."
+  },
+  "AGRAVO INTERNO": {
+   "trilha": "PECA",
+   "dias": 15,
+   "contagem": "uteis",
+   "fonte_prazo": "tabela",
+   "fatal": true,
+   "base_legal": "arts. 1.021 e 1.003, 5o CPC (15 dias uteis)",
+   "titularidade_padrao": "NOSSO",
+   "gatilhos": [
+    "agravo interno",
+    "decisao monocratica",
+    "art. 932",
+    "nego provimento ao recurso",
+    "nao conheco do recurso",
+    "monocraticamente"
+   ],
+   "observacao": "Monocratica do relator (TJ/TRF/STJ). Conferir se a decisao e contra nos antes de recorrer."
+  },
+  "MANIFESTACAO SOBRE LAUDO PERICIAL": {
+   "trilha": "PECA",
+   "dias": null,
+   "dias_supletivo": 15,
+   "contagem": "uteis",
+   "fonte_prazo": "despacho",
+   "fatal": false,
+   "base_legal": "art. 477, 1o CPC (15 dias comuns)",
+   "gatilhos": [
+    "laudo pericial",
+    "manifeste-se sobre o laudo",
+    "manifestem-se sobre o laudo",
+    "perito apresentou",
+    "assistente tecnico",
+    "teor do laudo",
+    "sobre o laudo",
+    "quesitos complementares",
+    "esclarecimentos do perito",
+    "impugnacao ao laudo",
+    "laudo agronomico",
+    "laudo contabil"
+   ],
+   "observacao": "Agro: pericia agronomica (frustracao de safra, capacidade de pagamento) e contabil (encargos)."
+  },
+  "MANIFESTACAO SOBRE DOCUMENTOS": {
+   "trilha": "PECA",
+   "dias": null,
+   "dias_supletivo": 15,
+   "contagem": "uteis",
+   "fonte_prazo": "despacho",
+   "fatal": false,
+   "base_legal": "art. 437, 1o CPC (15 dias)",
+   "gatilhos": [
+    "documentos juntados",
+    "manifeste-se sobre os documentos",
+    "manifestem-se sobre os documentos",
+    "art. 437",
+    "vista dos documentos"
+   ],
+   "observacao": "Planilhas, extratos e cedulas juntados pelo banco: impugnar especificamente."
+  },
+  "IMPUGNACAO A PENHORA / AVALIACAO": {
+   "trilha": "PECA",
+   "dias": null,
+   "dias_supletivo": 15,
+   "contagem": "uteis",
+   "fonte_prazo": "despacho",
+   "fatal": true,
+   "base_legal": "art. 917, 1o CPC (15 dias da ciencia); art. 525, 11 no cumprimento",
+   "titularidade_polo": "passivo",
+   "gatilhos": [
+    "auto de penhora",
+    "termo de penhora",
+    "penhora realizada",
+    "penhora do imovel",
+    "laudo de avaliacao",
+    "auto de avaliacao",
+    "intime-se o executado da penhora",
+    "intimacao da penhora",
+    "avaliacao do imovel"
+   ],
+   "observacao": "Agro: impenhorabilidade da pequena propriedade rural (CF art. 5o XXVI; CPC art. 833, VIII; Tema 961 STF; Tema 1234 STJ - onus do executado provar a exploracao familiar). Juntar CCIR, modulo fiscal, ITR, notas de produtor."
+  },
+  "BUSCA E APREENSAO (DL 911/69)": {
+   "trilha": "PECA",
+   "dias": null,
+   "dias_supletivo": 15,
+   "contagem": "uteis",
+   "fonte_prazo": "despacho",
+   "fatal": true,
+   "base_legal": "art. 3o, 2o e 3o DL 911/69 (purga 5 dias; resposta 15 dias)",
+   "titularidade_polo": "passivo",
+   "gatilhos": [
+    "busca e apreensao",
+    "decreto-lei 911",
+    "dl 911",
+    "alienacao fiduciaria",
+    "liminar de busca e apreensao",
+    "purgar a mora",
+    "purgacao da mora",
+    "integralidade da divida"
+   ],
+   "observacao": "URGENTE. Termo inicial e a EXECUCAO DA LIMINAR, nao a publicacao: purga da mora em 5 dias e resposta em 15 (conferir redacao e contagem). Agro: maquina/implemento da safra - avaliar agravo de instrumento no mesmo dia."
+  },
+  "LEILAO / HASTA PUBLICA": {
+   "trilha": "MEIO",
+   "dias": null,
+   "contagem": "uteis",
+   "fonte_prazo": "despacho",
+   "fatal": false,
+   "base_legal": "arts. 879 a 903 CPC; art. 889 (intimacao do executado)",
+   "titularidade_polo": "passivo",
+   "gatilhos": [
+    "leilao",
+    "hasta publica",
+    "leiloeiro",
+    "edital de leilao",
+    "primeiro leilao",
+    "segundo leilao",
+    "alienacao judicial",
+    "designo leilao",
+    "praca publica"
+   ],
+   "observacao": "Produtor executado: a data do leilao vira compromisso URGENTE. Avaliar agravo/tutela para suspender, impenhorabilidade, nulidade da intimacao, preco vil, remicao ou acordo."
+  },
+  "INTIMACAO DE TESTEMUNHAS": {
+   "trilha": "MEIO",
+   "dias": null,
+   "contagem": "uteis",
+   "fonte_prazo": "despacho",
+   "fatal": false,
+   "base_legal": "art. 357, 4o e art. 455 CPC",
+   "gatilhos": [
+    "rol de testemunhas",
+    "intimacao de testemunha",
+    "arrolar testemunhas",
+    "art. 455"
+   ],
+   "observacao": "O advogado intima a testemunha por carta e junta o AR ate 3 dias antes da audiencia (art. 455, 1o)."
+  },
+  "JUNTADA DE DOCUMENTOS": {
+   "trilha": "MEIO",
+   "dias": null,
+   "dias_supletivo": 5,
+   "contagem": "uteis",
+   "fonte_prazo": "despacho",
+   "fatal": false,
+   "base_legal": "art. 218, 3o CPC (supletivo)",
+   "gatilhos": [
+    "junte",
+    "apresente os documentos",
+    "juntada de documentos",
+    "juntar em",
+    "junte aos autos",
+    "comprove a hipossuficiencia",
+    "declaracao de imposto de renda",
+    "comprovantes de rendimento"
+   ],
+   "observacao": "Gratuidade do produtor: IR/LCDPR, extratos e fluxo de caixa (art. 99, 2o CPC)."
+  },
+  "CUSTAS E PREPARO": {
+   "trilha": "MEIO",
+   "dias": null,
+   "contagem": "uteis",
+   "fonte_prazo": "despacho",
+   "fatal": true,
+   "base_legal": "art. 1.007 CPC",
+   "gatilhos": [
+    "preparo",
+    "porte de remessa",
+    "guia de preparo",
+    "desercao",
+    "recolhimento em dobro"
+   ],
+   "observacao": "MEIO porem FATAL: falta de preparo = desercao (art. 1.007, 4o: intimacao para dobro)."
+  },
+  "ALVARA / LEVANTAMENTO": {
+   "trilha": "MEIO",
+   "dias": null,
+   "contagem": "uteis",
+   "fonte_prazo": "despacho",
+   "fatal": false,
+   "base_legal": "-",
+   "gatilhos": [
+    "alvara",
+    "levantamento de valores",
+    "expeca-se alvara",
+    "dados bancarios para levantamento",
+    "expedicao de alvara",
+    "transferencia eletronica"
+   ]
+  },
+  "DADOS BANCARIOS / CADASTRAIS": {
+   "trilha": "MEIO",
+   "dias": null,
+   "contagem": "uteis",
+   "fonte_prazo": "despacho",
+   "fatal": false,
+   "base_legal": "-",
+   "gatilhos": [
+    "informe os dados bancarios",
+    "atualize o cadastro",
+    "endereco atualizado",
+    "dados para deposito",
+    "informar dados bancarios",
+    "dados bancarios"
+   ]
   }
  },
  "abre_junto": {

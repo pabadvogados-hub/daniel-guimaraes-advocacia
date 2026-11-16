@@ -156,7 +156,7 @@ def _tem_endereco_no_texto(texto):
 
 
 # ----------------------------------------------- CEP: a automacao acha ------
-# REGRA DA PAM (14/10/2026, caso Francisco Roberio, conversa 1768): CEP e
+# REGRA DA EQUIPE (14/10/2026, caso cliente B, conversa 1768): CEP e
 # pedaco de endereco quem acha e a AUTOMACAO (ViaCEP -> busca na web pelo
 # Claude da VPS); contrato NUNCA para por CEP que da para achar. Voltar a
 # pedir o comprovante ao cliente e o ultimissimo recurso, quando nada se

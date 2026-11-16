@@ -117,7 +117,7 @@ def criar_pasta_cliente(drive_service, nome_cliente: str) -> str:
 
     try:
         # IDEMPOTENTE desde 21/10/2026 (Advogada). Antes esta funcao criava as cegas, e o intake do
-        # Francisco Roberio, que falhou tres vezes em 14/10, deixou QUATRO pastas com o mesmo
+        # cliente B, que falhou tres vezes em 14/10, deixou QUATRO pastas com o mesmo
         # nome em RECLAMANTE. Com nome repetido o arquivador do WhatsApp se recusa a escolher
         # (trava de sigilo) e o documento do cliente cai na pasta de leads.
         escapado = nome_alvo.replace("'", "\\'")
@@ -324,7 +324,7 @@ def gerar_documentos_cliente(drive_service, docs_service, nome_cliente: str,
         # procuracao. A decisao dela: "a gente vai ter documentos de procuracao
         # que vao dar essa substancia para o contrato. Ele nao vai ficar vago".
         #
-        # Veio do caso Francisco Roberio, cujo contrato saiu "em desfavor de
+        # Veio do caso cliente B, cujo contrato saiu "em desfavor de
         # JAQUELINE RODRIGUES CORREIA", nome do emprego REGISTRADO dele de 2023
         # a 2025, quando o caso era o trabalho sem carteira no CEASA em 2026.
         # Em acao de reconhecimento de vinculo a reclamada nunca esta na CTPS.
@@ -360,7 +360,7 @@ def gerar_documentos_cliente(drive_service, docs_service, nome_cliente: str,
             # ATENCAO (24/09/2026): era aqui que o contrato saia com os
             # {{campos}} do modelo. O `if valor` pulava o campo vazio e o
             # marcador FICAVA no documento, que ia assinado para o cliente
-            # (CT. 100/2026, Heitor Valença). Agora campo vazio tambem gera
+            # (CT. 100/2026, cliente A). Agora campo vazio tambem gera
             # pedido: o OPCIONAL some limpo e o ESSENCIAL e barrado na
             # conferencia logo abaixo.
             # Cidade sem divisao por bairros (Advogada, 01/10/2026): com a marca

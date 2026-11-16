@@ -2,7 +2,7 @@
 """
 dados_do_cliente.py  -  a QUALIFICACAO do cliente sai dos DOCUMENTOS dele.
 
-REGRA DA ADVOGADA (24/09/2026, depois do contrato do Heitor Valença ter sido
+REGRA DA ADVOGADA (24/09/2026, depois do contrato do cliente A ter sido
 assinado com os {{campos}} do modelo a mostra):
 
   "as informacoes para preenchimento do contrato sao SEMPRE extraidas dos
@@ -23,7 +23,7 @@ Cada campo tem um dono:
 
 Leitura por VISAO do Claude da assinatura (mesmo caminho do claude_vps), NUNCA
 pela API e NUNCA por OCR. O OCR do Tesseract foi quem devolveu lixo na CNH do
-Heitor: veio o nome da MAE e nenhum CPF.
+cliente A: veio o nome da MAE e nenhum CPF.
 
 Este modulo NAO fala com o cliente e NAO escreve em lugar nenhum. So le
 documento e devolve dicionario. Quem decide o que fazer com a falta e o vigia.
@@ -127,7 +127,7 @@ _PROMPTS = {"cnh": _PROMPT_CNH, "ctps": _PROMPT_CTPS,
 # Prompt UNICO: diz o tipo, diz se da para ler e ja extrai os campos daquele
 # tipo, tudo numa passada so. Antes eram DUAS chamadas de visao por arquivo (o
 # vigia classificava e a varredura classificava de novo) e nenhuma das duas
-# olhava se o documento estava legivel: a CNH ilegivel do Heitor passou como
+# olhava se o documento estava legivel: a CNH ilegivel do cliente A passou como
 # "cnh" e o intake seguiu com ela. Uma chamada so tambem e a metade do token.
 _PROMPT_LEITURA = u"""Você lê documentos que clientes de um escritório trabalhista mandam
 pelo WhatsApp. Diga O QUE É, se DÁ PARA LER e extraia os dados. Responda SÓ este JSON:
@@ -256,7 +256,7 @@ _LIXO = re.compile(r"\(.*?(incert|ilegiv|ilegív|confirmar|verificar|nao informa
 def _limpo(v):
     """Tira do VALOR qualquer ressalva que a IA tenha escrito dentro dele.
 
-    No contrato do Heitor o endereco foi para o papel assinado como
+    No contrato do cliente A o endereco foi para o papel assinado como
     'Rua Yanasso (grafia incerta por qualidade do documento), n 1385'. Campo de
     contrato nao e lugar de recado: ou o dado esta limpo, ou esta vazio.
     """
@@ -658,7 +658,7 @@ def qualificacao(docs, texto_conversa="", entrevista=None, card=None):
         # Cidade sem divisao por bairros (regra da Advogada, 01/10/2026): os Correios
         # responderam o CEP, confirmaram a cidade e devolveram o bairro VAZIO.
         # Isso prova que o bairro NAO EXISTE ali, nao que faltou procurar. Caso
-        # do Jhonatan Cordeiro, em Eldorado/MS, que tem CEP unico para a cidade.
+        # do cliente F, numa cidade pequena, que tem CEP unico para a cidade.
         if pelo_cep.get("cidade_estado") and not pelo_cep.get("bairro") \
                 and not dados.get("bairro"):
             dados["_bairro_nao_existe"] = True

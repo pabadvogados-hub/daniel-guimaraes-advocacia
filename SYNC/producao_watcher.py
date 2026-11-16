@@ -278,7 +278,7 @@ def buscar_transcricao(nome, cid, pastas=()):
 
 
 # ---------------- insumos completos (ordem da Advogada, 24/09/2026) ----------------
-# Caso Heitor Valença (conversa 1485): o motor lia SO a transcricao da pasta e
+# Caso cliente A (conversa 1485): o motor lia SO a transcricao da pasta e
 # a primeira CCT que o Drive devolvesse. O salario, a empresa, o CNPJ e as datas
 # estavam na aba Entrevista e no TRCT/ficha da CTPS, que o motor nunca abria; a
 # liquidacao caiu com "salario ausente" e a CCT pega foi a ALTERNATIVA (SETTRIM)
@@ -346,7 +346,7 @@ def _id_midia(nome):
 def documentos_da_pasta(docs_id, cid):
     """Baixa os documentos (sem duplicata: a varredura antiga subia 2 copias da
     mesma midia) para WORK/<cid>_docs e devolve a lista de caminhos locais."""
-    # paginado: a pasta do Heitor tinha 141 arquivos e o _listar para em 100
+    # paginado: a pasta do cliente A tinha 141 arquivos e o _listar para em 100
     # SUBPASTAS (29/09/2026): cliente com acao contra mais de uma empresa (Silvano: TRANSPORTADORA A e
     # TRANSPORTADORA B) tem os documentos em DOCUMENTOS DO CLIENTE/<EMPRESA>. Antes so a
     # raiz era lida e a inicial saia sem holerite/ponto. Agora desce nas subpastas; o
@@ -585,7 +585,7 @@ def liquidar(dossie):
     piso = _dinheiro(c.get("piso_valor")) or None
     sal = _dinheiro(ct.get("salario_registrado"))
     # dado faltante vira pendencia em vermelho, nao derruba a producao (regra da
-    # casa; caso Heitor 24/09/2026). So para se faltarem os dois.
+    # casa; caso cliente A 24/09/2026). So para se faltarem os dois.
     pend = dossie.setdefault("pendencias", [])
     if not sal and piso:
         sal = piso
@@ -617,7 +617,7 @@ def liquidar(dossie):
     dias_uteis = round(meses * (26 if dias_sem >= 6 else 22))
     com_mes = 500.0 if ct.get("comissoes_por_fora") else 0.0
     # base = o maior entre salario registrado e piso (antes era SEMPRE o piso,
-    # o que subliquidava quem ganha acima dele, como o Heitor: 2.177,97 x 1.675,36)
+    # o que subliquidava quem ganha acima dele, como o cliente A: 2.177,97 x 1.675,36)
     sal_dev = max(piso, sal) + com_mes
     vh = sal_dev / 220
     he_pct = (_dinheiro(c.get("adicional_he_pct"), 50) or 50) / 100

@@ -87,15 +87,19 @@ _SKILL_REVISAO = [
 _MEIO_FLAVIA = re.compile(r'CUSTAS|GUIA|DEPOSITO|CREDENCIAMENTO|DILIGENCIA|CIENCIA|DISTRIBUICAO')
 # skill que REDIGE a primeira versao da peca. Sem skill (RR, agravo, laudo), a
 # Advogada produz a etapa 1 e o resto da cadeia e o mesmo.
-_SKILL_PRODUCAO = [
+_SKILL_PRODUCAO = [   # a primeira que casar vence: as especificas vem antes das genericas
     (re.compile(r'REPLICA|IMPUGNACAO A CONTESTACAO|MANIFESTACAO SOBRE (A )?(DEFESA|CONTESTACAO|DOCUMENTOS)'), 'replica'),
+    (re.compile(r'EMBARGOS A EXECUCAO|EMBARGOS DO DEVEDOR'), 'embargos-execucao-cedula-rural'),
     (re.compile(r'EMBARGOS DE DECLARACAO'), 'embargos-declaracao'),
-    (re.compile(r'RECURSO ORDINARIO|APELACAO'), 'ro-recurso-ordinario'),
-    (re.compile(r'CONTRARRAZ|CONTRAMINUTA'), 'contrarrazoes-ro'),
+    (re.compile(r'CONTRARRAZ|CONTRAMINUTA'), 'contrarrazoes-apelacao'),
+    (re.compile(r'AGRAVO DE INSTRUMENTO'), 'agravo-instrumento'),
+    (re.compile(r'APELACAO|RECURSO ORDINARIO'), 'apelacao-civel'),
     (re.compile(r'RAZOES FINAIS|MEMORIAIS|ALEGACOES FINAIS'), 'razoes-finais'),
     (re.compile(r'CALCULO|LIQUIDACAO|EXECUCAO CUMPRIMENTO'), 'liquidacao-previa'),
-    (re.compile(r'INICIAL(?! EXECUCAO)|EMENDA'), 'peticao-inicial-reclamante'),
-    (re.compile(r'CONTESTACAO|DEFESA'), 'contestacao-reclamada'),
+    (re.compile(r'NOTIFICACAO (AO BANCO|EXTRAJUDICIAL)|PEDIDO DE PRORROGACAO'), 'notificacao-extrajudicial-banco'),
+    (re.compile(r'REVISIONAL'), 'revisional-cedula-rural'),
+    (re.compile(r'INICIAL(?! EXECUCAO)|EMENDA'), 'inicial-prorrogacao-divida-rural'),
+    (re.compile(r'CONTESTACAO|DEFESA|BUSCA E APREENSAO'), 'contestacao-produtor'),
 ]
 # liquidacao e calculo: antes da peca, a tarefa de mandar ao contador quando os
 # direitos pedem calculo mais apurado (Advogada, 05/10/2026). E condicional: a pessoa
@@ -278,7 +282,7 @@ def etapas_da_peca(ato, quem_produz, venc, interno, hoje, uf='', providencia='',
                              'entrega na tarefa seguinte, dizendo qual estrategia adotou e por que. %s'
                              % ((' pela skill ' + producao) if producao else '', prazos),
                              prazo_fatal=fatal, rotulo='ANALISE, ESTRATEGIA E PRIMEIRA VERSAO: ' + nome_peca,
-                             skill_analise='embargos-declaracao + %s' % (producao or 'ro-recurso-ordinario'),
+                             skill_analise='embargos-declaracao + %s' % (producao or 'apelacao-civel'),
                              skill_producao=producao))
         n += 1
         etapas.append(_etapa(n, TT.PECA, quem_produz, d_peca,
@@ -2110,7 +2114,7 @@ if __name__ == '__main__':
     assert tipos(r) == ['PECA', 'REVISAO', 'AJUSTES', 'PROTOCOLO'], r
     assert datas(r) == ['2026-10-02', '2026-10-05', '2026-10-06', '2026-10-07'], datas(r)
     assert [e['para'] for e in r['etapas']] == ['Advogada', 'Assistente', 'Advogada', 'Advogada'], r     # emenda: sem a Advogada
-    assert r['etapas'][0]['skill_producao'] == 'peticao-inicial-reclamante' and r['etapas'][1]['skill'] == 'revisao-inicial'
+    assert r['etapas'][0]['skill_producao'] == 'inicial-prorrogacao-divida-rural' and r['etapas'][1]['skill'] == 'revisao-inicial'
     assert r['pf']['marcador'] == 'intim:78821' and r['pf']['data'] == '2026-10-07' and not r['pf_paralelo']
 
     m2 = dict(m, ato='RECURSO ORDINARIO', vencimento='2026-10-14', prazo_fatal_interno='2026-10-09', responsavel='Advogada')
@@ -2118,7 +2122,7 @@ if __name__ == '__main__':
     assert tipos(r2) == ['ANALISE', 'PECA', 'REVISAO', 'AJUSTES', 'PROTOCOLO'], r2      # sem a etapa de estrategia da Advogada
     assert datas(r2) == ['2026-10-02', '2026-10-06', '2026-10-07', '2026-10-08', '2026-10-09'], datas(r2)
     assert [e['para'] for e in r2['etapas']] == ['Assistente', 'Advogada', 'Assistente', 'Advogada', 'Advogada']
-    assert r2['etapas'][0]['skill_producao'] == 'ro-recurso-ordinario' and r2['etapas'][2]['skill'] == 'revisao-recursos'
+    assert r2['etapas'][0]['skill_producao'] == 'apelacao-civel' and r2['etapas'][2]['skill'] == 'revisao-recursos'
     assert 'REFAZER' in r2['etapas'][1]['texto'] and r2['etapas'][1]['rotulo'].startswith('REVISAR ESTRATEGIA E PECA')
 
     # sentenca com ED em paralelo: a cadeia e datada pelo prazo mais curto e ha dois PFs
@@ -2172,7 +2176,7 @@ if __name__ == '__main__':
     assert r9['etapas'][0]['skill_producao'] is None and r9['etapas'][2]['skill'] == 'revisao-recursos'   # RR ainda sem skill de redacao
     r10 = cadeia_para(dict(m, ato='CONTRARRAZOES DE RR', vencimento='2026-10-14', prazo_fatal_interno='2026-10-09'),
                       {'id': 10, 'processo': 'x'}, hoje=hoje)
-    assert tipos(r10) == ['PECA', 'REVISAO', 'AJUSTES', 'PROTOCOLO'] and r10['etapas'][0]['skill_producao'] == 'contrarrazoes-ro'
+    assert tipos(r10) == ['PECA', 'REVISAO', 'AJUSTES', 'PROTOCOLO'] and r10['etapas'][0]['skill_producao'] == 'contrarrazoes-apelacao'
     assert precisa_estrategia('EMBARGOS DE DECLARACAO') and precisa_estrategia('AGRAVO INTERNO')
     assert not precisa_estrategia('MANIFESTACAO SOBRE ED') and not precisa_estrategia('EMBARGOS A EXECUCAO')
     assert quem('Dra. Advogada')['id'] == REVISORA_ID and quem('Assistente')['id'] == AUTOMACAO_ID

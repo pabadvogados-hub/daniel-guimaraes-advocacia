@@ -27,15 +27,19 @@ def ler_dna():
     return DNA.read_text(encoding='utf-8') if DNA.exists() else ''
 
 
-SISTEMA = """Voce e a advogada redatora do escritorio. Escreva a peca COMPLETA, pronta para revisao,
-seguindo a risca o DNA abaixo (enderecamento, abertura "por suas advogadas", topicos DA/DO em
-caixa alta, citacao de dispositivo em paragrafo proprio, pedidos em alineas, fecho "Termos em que,
-pede deferimento.", cidade e data, bloco de assinatura).
+SISTEMA = """Voce e o(a) redator(a) juridico(a) do escritorio, que defende o PRODUTOR RURAL (credito rural,
+cedulas rurais, prorrogacao de divida rural, execucao, busca e apreensao, revisional, recuperacao
+judicial), em processo civil (CPC). Escreva a peca COMPLETA, pronta para revisao, seguindo a risca o
+DNA abaixo (justica e enderecamento, abertura "por seus advogados", topicos DA/DO em caixa alta,
+citacao de dispositivo em paragrafo proprio, pedidos em alineas, fecho "Termos em que, pede
+deferimento.", cidade e data, bloco de assinatura).
 
 Regras inegociaveis:
 - nunca invente jurisprudencia: sem precedente que esteja no DNA ou no bloco de jurisprudencia
   verificada, escreva [CONFERIR PRECEDENTE];
-- nunca invente dado do cliente ou do processo: use [PREENCHER: campo];
+- nunca invente dado do cliente, da cedula ou do processo (numero da operacao, taxa, saldo,
+  vencimento, area, producao): use [PREENCHER: campo];
+- norma do CMN/MCR so com a redacao conferida no DNA; na duvida, [CONFERIR redacao do MCR];
 - valores sempre com "R$";
 - devolva SO o texto da peca, um paragrafo por linha, sem markdown (sem #, sem **), sem comentarios.
 
@@ -57,7 +61,7 @@ def _chave_anthropic():
 def montar_prompt(dados_caso, tipo_peca, esqueleto='', jurisprudencia=''):
     partes = ['TIPO DE PECA: %s' % (tipo_peca or '').upper(), '', 'DADOS DO CASO E DOS AUTOS:', dados_caso or '']
     if esqueleto:
-        partes += ['', 'ESQUELETO / ORIENTACAO DA ADVOGADA (siga a ordem dos topicos):', esqueleto]
+        partes += ['', 'ESQUELETO / ORIENTACAO DO ADVOGADO (siga a ordem dos topicos):', esqueleto]
     if jurisprudencia:
         partes += ['', 'JURISPRUDENCIA VERIFICADA (use so esta):', jurisprudencia]
     return '\n'.join(partes)
@@ -188,18 +192,18 @@ def formatar_no_timbrado(texto, out_path, modelo=None):
 
 if __name__ == '__main__':  # teste offline: so formatacao
     import tempfile
-    exemplo = """AO JUÍZO DA 1ª VARA DO TRABALHO DE CIDADE – SP
-Processo nº 0000000-00.2026.5.02.0491
-FULANO DE TAL, nos autos da reclamação trabalhista que move em face de EMPRESA X LTDA., por suas advogadas, vem respeitosamente perante Vossa Excelência, apresentar sua RÉPLICA À CONTESTAÇÃO, pelos motivos de fato e de direito a seguir expostos:
-DO INTERVALO INTRAJORNADA
-A Reclamada sustenta que o intervalo era integralmente usufruído.
+    exemplo = """AO JUÍZO DA 1ª VARA CÍVEL DA COMARCA DE CIDADE – UF
+Processo nº 0000000-00.2026.8.00.0000
+FULANO DE TAL, já qualificado nos autos da ação de prorrogação de dívida rural que move em face de BANCO X S.A., por seus advogados, vem respeitosamente perante Vossa Excelência, apresentar sua RÉPLICA À CONTESTAÇÃO, pelos motivos de fato e de direito a seguir expostos:
+DA PRORROGAÇÃO DA DÍVIDA RURAL
+O Réu sustenta que a prorrogação seria mera faculdade da instituição financeira.
 Ao contrário.
 DOS PEDIDOS
 a) a rejeição das teses defensivas;
 b) a procedência integral dos pedidos.
 Termos em que, pede deferimento.
 Cidade, 10 de novembro de 2026.
-NOME DA ADVOGADA – OAB/UF 000.000"""
+NOME DO ADVOGADO – OAB/UF 000.000"""
     out = formatar_no_timbrado(exemplo, Path(tempfile.gettempdir()) / 'teste_timbrado_esc.docx')
     from docx import Document
     d = Document(out)

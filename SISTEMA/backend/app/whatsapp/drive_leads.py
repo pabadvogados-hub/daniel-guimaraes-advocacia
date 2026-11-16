@@ -94,7 +94,7 @@ PASTA_RECLAMANTE = os.getenv('GOOGLE_PASTA_RECLAMANTE', '')   # ID da pasta-mae 
 SUBPASTA_DOCS = 'DOCUMENTOS DO CLIENTE'
 # Etiqueta que a equipe gruda no nome (na pasta ou no contato do WhatsApp) e que
 # nao faz parte do nome da pessoa. ADVOGADO fica DE FORA de proposito: "Antonio
-# Marcos Advogado" nao e o cliente Fausto Brandão.
+# Marcos Advogado" nao e o cliente cliente H.
 _RUIDO = {'ESPOLIO', 'CLIENTE', 'TRABALHISTA',
           'NOVO', 'ANTIGO', 'LEAD', 'LEADS'}
 
@@ -125,7 +125,7 @@ def _casa(partes_pessoa: list, partes_pasta: list, raros: set | None = None) -> 
     exatamente onde ele ja caia antes. Errar pra menos custa um arquivo no lugar
     de sempre; errar pra mais custa sigilo.
 
-    O contato costuma ter MENOS nomes que a pasta ("Teodoro Lins" x "TEODORO LINS
+    O contato costuma ter MENOS nomes que a pasta ("Fulano Lins" x "FULANO LINS
     DE OLIVEIRA CAMPOS"), por isso e subconjunto e nao igualdade.
     """
     if len(partes_pessoa) < 2 or len(partes_pasta) < 2:
@@ -144,7 +144,7 @@ def _casa(partes_pessoa: list, partes_pasta: list, raros: set | None = None) -> 
 
 
 # NOME COMPLETO PELO TELEFONE. O nome do card vem cortado pelo CRM
-# ("Jesse", "Francisco Roberio Do Nasc") e o casamento de pasta, que e duro de proposito,
+# ("Fulano", "cliente B") e o casamento de pasta, que e duro de proposito,
 # falhava: o documento do cliente ia para a pasta de leads. O cadastro tem o nome inteiro.
 DB_SISTEMA = os.getenv('SISTEMA_DB', '/opt/escritorio/SISTEMA/backend/sistema_esc.db')
 

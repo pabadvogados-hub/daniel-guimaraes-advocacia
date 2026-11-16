@@ -468,7 +468,7 @@ def _fase(card):
 
 
 def _nome_limpo(c):
-    """Nome do contrato, ou o do WhatsApp quando o do contrato saiu com placeholder (ex.: 'Heitor sobrenome nao informado')."""
+    """Nome do contrato, ou o do WhatsApp quando o do contrato saiu com placeholder (ex.: 'cliente A sobrenome nao informado')."""
     nc = c.get('nome_contrato') or ''
     return c.get('nome_wa') or nc if (not nc or PLACEHOLDER.search(' '.join(_norm(nc)))) else nc
 

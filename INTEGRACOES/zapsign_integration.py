@@ -84,7 +84,7 @@ def normalizar_telefone(tel):
 
 
 # PADRAO DA ASSINATURA (Advogada, 23/10/2026): o cliente desenha na tela e confirma com o codigo que
-# chega no WHATSAPP, nao mais por SMS. Nasceu do caso Ivo Pacheco Neri, que recebeu seis SMS,
+# chega no WHATSAPP, nao mais por SMS. Nasceu do caso cliente C, que recebeu seis SMS,
 # abriu o contrato doze vezes e nao conseguiu assinar. A ZapSign documenta que o codigo por
 # WhatsApp chega com mais confianca que o SMS, e o nosso publico le WhatsApp. Vale para o que
 # nascer daqui para frente: documento que ja esta no ZapSign segue como esta.
@@ -201,7 +201,7 @@ def criar_documento(nome, pdf_base64, signers, folder_path='/', external_id='',
     # criar_documento() direto, sem passar por enviar_documento(). Posto la,
     # o fiscal deixaria o Desbloqueio GR inteiro de fora.
     #
-    # Nasceu do CT 100/2026 (Heitor Valença), assinado em 22/09/2026 com os
+    # Nasceu do CT 100/2026 (cliente A), assinado em 22/09/2026 com os
     # {{campos}} a mostra. Medido em 71 documentos reais antes de subir: 65
     # aprovados, 6 barrados, e os 6 sao os do incidente.
     #
@@ -542,8 +542,8 @@ def atualizar_signatario(signer_token, **campos):
 
     Serve para o que a gente aprendeu em 23/10/2026: trocar o auth_mode de quem trava na tela de
     desenho (para 'tokenWhatsapp', so o codigo) e preencher o telefone de documento que nasceu
-    sem ele, caso em que o cliente nunca teve como ser avisado (Ivo Pacheco Neri e os documentos
-    corrigidos do Valdo Sarmento).
+    sem ele, caso em que o cliente nunca teve como ser avisado (cliente C e os documentos
+    corrigidos do cliente D).
 
     Campos aceitos pela API: name, email, phone_country, phone_number, auth_mode, lock_name,
     lock_email, lock_phone, qualification, external_id, send_automatic_whatsapp,

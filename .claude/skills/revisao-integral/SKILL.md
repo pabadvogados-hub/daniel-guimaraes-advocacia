@@ -1,6 +1,6 @@
 ---
 name: revisao-integral
-description: Revisão geral de qualquer peça que não tenha skill de revisão específica.
+description: Revisão geral de qualquer peça cível/agro que não tenha skill de revisão específica.
 ---
 
 # revisao-integral
