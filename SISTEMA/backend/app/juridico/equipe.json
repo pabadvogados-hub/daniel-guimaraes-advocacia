@@ -1,0 +1,26 @@
+{
+ "_doc": "Quem e quem no motor das tarefas. 'id' e o id da tabela usuarios do sistema (Usuarios > lista). Os papeis apontam para uma pessoa: troque aqui quando a equipe crescer (ex.: uma associada assume a producao), sem mexer em codigo. Variaveis ESC_USUARIO_<CHAVE>_ID no .env sobrescrevem o id. PROVISORIO (16/11/2026): ainda nao temos a equipe do escritorio; todos os papeis humanos estao com o Dr. Daniel ate o kickoff.",
+ "pessoas": {
+  "titular": {"id": 1, "nome": "Dr. Daniel Guimarães"},
+  "advogada": {"id": 2, "nome": "Associada (a definir)"},
+  "automacao": {"id": 3, "nome": "Assistente IA (automacao)"}
+ },
+ "papeis": {
+  "titular": "titular",
+  "financeiro": "titular",
+  "revisora": "titular",
+  "producao": "titular",
+  "controladoria_humana": "titular",
+  "protocolo": "titular",
+  "dona_das_tarefas": "titular",
+  "automacao": "automacao"
+ },
+ "apelidos": {
+  "dr": "titular",
+  "daniel": "titular",
+  "dra": "advogada",
+  "assistente": "automacao",
+  "ia": "automacao",
+  "controladoria": "automacao"
+ }
+}
